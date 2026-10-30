@@ -1820,7 +1820,7 @@ $('#tpNextBtn').onclick=()=>tpNext();if($('#recBtn'))$('#recBtn').onclick=()=>st
 async function freshStart(){
   if(!confirm('নতুন করে শুরু করবেন?\n\nস্ক্রিপ্ট, খবরের লেখা, দৃশ্যের সব পরিবর্তন আর ভয়েস মুছে যাবে।\n(সেটিংস, API কী, লোগো থাকবে।)'))return;
   const clearPics=GALLERY.length&&confirm('লাইব্রেরির ছবি-ভিডিওগুলোও মুছে ফেলবেন?\n\n"OK" = মুছুন, "Cancel" = রেখে দিন');
-  pause();$('#script').value='';$('#rawText').value='';const pb=$('#pasteBox');if(pb)pb.value='';overrides={};scenes=[];total=0;T=0;
+  pause();$('#script').value='';$('#rawText').value='';const pb=$('#pasteBox');if(pb)pb.value='';overrides={};scenes=[];total=0;T=0;settings.newsGroups=[];
   audioEl.removeAttribute('src');audioEl.load();hasAudio=false;try{voiceButtons();}catch(e){}
   if(clearPics){GALLERY.length=0;await saveGallery();renderGallery();}
   ['#aistatus','#aisources'].forEach(s=>{const e=$(s);if(e)e.classList.add('hidden');});
@@ -1939,7 +1939,7 @@ if(settings.highlights==null)settings.highlights=true;
 
 /* ---------- layout extras: fill to voice length, photo-style rotation, anti-repeat, highlights ---------- */
 {const _lay=layout;layout=function(){_lay();
-  if(hasAudio&&!LIVE&&isFinite(audioEl.duration)&&audioEl.duration>total+.3&&scenes.length){let k=scenes.length-1;while(k>0&&scenes[k].special)k--;scenes[k].dur+=audioEl.duration-total;let s=0;scenes.forEach(sc=>{sc.start=s;s+=sc.dur;});total=s;}
+  if(false){let k=scenes.length-1;while(k>0&&scenes[k].special)k--;scenes[k].dur+=audioEl.duration-total;let s=0;scenes.forEach(sc=>{sc.start=s;s+=sc.dur;});total=s;}
   // PHOTO FOCUS: the news photo carries the video. Every scene shows it (in a new style each time),
   // except an occasional data visual (map / chart / number) so the story stays clear.
   if(GALLERY.length&&settings.autoPhoto!==false){const DATA=['mapbd','mapworld','bars','number','compare','percent','timeline','price','election','people'];let rot=0,lastData=-9,ch=false,ci=0;
@@ -1973,6 +1973,110 @@ setInterval(()=>{if(document.querySelector('#s-export.on')&&!playing)dirty=true;
   const ss=$('#studioSw');if(ss){const sm=ss.closest('.row').querySelector('small');if(sm)sm.textContent='ভয়েস দিলে খবর পাঠক আসবে, না দিলে শুধু ছবি-অ্যানিমেশন ও মিউজিক';}
   const ex=$('#exportBtn');if(ex&&!IS_MOB){const h=document.createElement('div');h.className='hint';h.textContent='ভয়েস বাধ্যতামূলক নয় — ভয়েস না দিলে খবর পাঠক ছাড়া ছবি, অ্যানিমেশন, হাইলাইট আর নিউজ মিউজিক দিয়ে ভিডিও হবে।';ex.after(h);}
 })();
+
+/* ============ EXTRAS v7: anchor show/hide, voice skip, photo per news, graded photos, studio wall variety, more data visuals ============ */
+
+/* ---------- 1. news reader: your choice, voice or not ---------- */
+if(!settings.anchorMig){settings.anchorMig=1;settings.anchorVoice=false;}
+(function anchorUI(){
+  const ss=$('#studioSw');if(ss){const row=ss.closest('.row');row.querySelector('b').textContent='খবর পাঠক দেখান';const sm=row.querySelector('small');if(sm)sm.textContent='চালু = খবর পাঠক থাকবে, বন্ধ = শুধু ছবি ও অ্যানিমেশন (ভয়েস দিন বা না দিন)';}
+  const st=$('#studio');if(st&&!IS_MOB){const o=st.options;if(o[0])o[0].textContent='দেখান — খবর পাঠক থাকবে (ভয়েস দিন বা না দিন)';if(o[1])o[1].textContent='লুকান — শুধু ছবি ও অ্যানিমেশন';const l=st.closest('label');if(l&&l.firstChild&&l.firstChild.nodeType===3)l.firstChild.textContent='খবর পাঠক (নিউজ রিপোর্টার)';}
+  // quick switch on the preview screen
+  const seg=document.querySelector('#s-preview .segc[data-for="aspect"]');
+  if(seg&&!$('#anchorQuick')){const g=document.createElement('div');g.className='group';g.style.marginTop='12px';g.innerHTML='<div class="row"><span class="lab"><b>খবর পাঠক</b><small>দেখান / লুকান</small></span><input type="checkbox" class="sw" id="anchorQuick" aria-label="খবর পাঠক দেখান"></div>';seg.after(g);
+    const q=$('#anchorQuick');const sync=()=>{q.checked=settings.studio!=='off';};sync();
+    q.addEventListener('change',()=>{setSel('studio',q.checked?'on':'off');if(scenes.length){layout();buildEvents();renderList();dirty=true;}});
+    $('#studio').addEventListener('change',sync);document.addEventListener('click',e=>{if(e.target.closest('[data-go="preview"]'))setTimeout(sync,50);});}
+  const sel=$('#studio');if(sel)sel.addEventListener('change',()=>{if(scenes.length){layout();buildEvents();renderList();dirty=true;}});
+})();
+
+/* ---------- 2. "without voice" really means without voice ---------- */
+function dropVoice(){if(!hasAudio)return true;if(!confirm('আগে দেওয়া ভয়েসটা বাদ দিয়ে ভয়েস ছাড়া ভিডিও বানাবেন?\n\n"OK" = ভয়েস বাদ দিন, "Cancel" = ফিরে যান'))return false;const b=$('#clearVoice');if(b){b.disabled=false;b.click();}return true;}
+['skipVoice','skipVoice2'].forEach(id=>{const b=$('#'+id);if(b)b.addEventListener('click',e=>{if(!dropVoice()){e.preventDefault();e.stopPropagation();}},true);});
+
+/* ---------- 3. video length = time to read the text (voice does not stretch it) ---------- */
+function autoDur(sc){if(sc.type==='intro')return 3.2;if(sc.type==='outro')return 3.8;if(sc.isChapter)return 3;return Math.max(4.6,sc.text.length/Math.min(settings.speed,11)+1.3);}
+
+/* ---------- 4. every photo is shown modified (graded / mirrored), never as the raw newspaper picture ---------- */
+{const _dp=drawPhoto;drawPhoto=function(img,x,y,w,h,z=1,px=0,py=0){if(settings.photoStyle==='color'&&img&&scenes.length){const sc=scenes[sceneAt(T)]||{};fxImg(img,x,y,w,h,{z,px,py,g:sc.fxg||1,flip:!!sc.fxf,tint:.22});return;}_dp(img,x,y,w,h,z,px,py);};}
+
+/* ---------- 5. photos belong to their own news ---------- */
+{const _ag=addGalleryFiles;addGalleryFiles=async function(files,meta={}){const n0=GALLERY.length;await _ag(files,meta);if(meta.group){for(let i=n0;i<GALLERY.length;i++)GALLERY[i].group=meta.group;await saveGallery();renderGallery();}};}
+function saveGallery(){return IDB.set('gallery',GALLERY.map(g=>({name:g.name,blob:g.blob,kind:g.kind,query:g.query||'',credit:g.credit||'',group:g.group||''})));}
+{const _la=loadAssets;loadAssets=async function(){await _la();try{const g=await IDB.get('gallery');if(Array.isArray(g))g.forEach((x,i)=>{if(GALLERY[i]&&GALLERY[i].name===x.name)GALLERY[i].group=x.group||'';});}catch(e){}};}
+if(!Array.isArray(settings.newsGroups))settings.newsGroups=[];
+function galleryFor(sc){const G=settings.newsGroups||[];const all=GALLERY.map((g,i)=>i);if(!G.length)return all;
+  const mine=G[Math.min(Math.max(0,(sc.chIdx||1)-1),G.length-1)];let c=all.filter(i=>GALLERY[i].group===mine);if(!c.length)c=all.filter(i=>G.includes(GALLERY[i].group));if(!c.length)c=all.filter(i=>!GALLERY[i].group);return c.length?c:all;}
+function groupPhoto(sc){const c=galleryFor(sc);return c.length?GALLERY[c[(sc.seed||0)%c.length]].img:null;}
+// library: show which news a photo belongs to + remove old news photos
+{const _rg=renderGallery;renderGallery=function(){_rg();const box=$('#gallery');if(!box)return;const G=settings.newsGroups||[];
+  box.querySelectorAll('.gi').forEach((d,i)=>{const g=GALLERY[i];if(!g)return;const cur=g.group&&G.includes(g.group);const tag=document.createElement('em');tag.className='gtag'+(cur?' cur':'');tag.textContent=cur?('এই খবর'+(G.length>1?' '+toBn(G.indexOf(g.group)+1):'')):(g.credit||(g.group?'আগের খবর':'নিজের'));d.appendChild(tag);});
+  let b=$('#galOld');if(!b){b=document.createElement('button');b.id='galOld';b.className=IS_MOB?'btn sec sm':'ghost small';b.style.margin='10px 0';b.onclick=async()=>{const G=settings.newsGroups||[];const old=GALLERY.filter(g=>g.group&&!G.includes(g.group)).length;if(!old)return;if(!confirm('আগের খবরগুলোর '+toBn(old)+'টি ছবি লাইব্রেরি থেকে মুছবেন? (এই খবরের আর নিজের দেওয়া ছবি থাকবে)'))return;for(let i=GALLERY.length-1;i>=0;i--){const g=GALLERY[i];if(g.group&&!G.includes(g.group))GALLERY.splice(i,1);}await saveGallery();renderGallery();if(scenes.length)build(true);};box.parentNode.insertBefore(b,box);}
+  const old=G.length?GALLERY.filter(g=>g.group&&!G.includes(g.group)).length:0;b.textContent='🗑 আগের খবরের ছবি মুছুন ('+toBn(old)+')';b.classList.toggle('hidden',!old);};}
+(function(){const st=document.createElement('style');st.textContent='.gi .gtag{position:absolute;left:6px;bottom:30px;font-style:normal;font-size:11px;background:rgba(0,0,0,.6);color:#fff;padding:2px 7px;border-radius:6px;max-width:85%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.gi .gtag.cur{background:#E5391B}.gi{position:relative}';document.head.appendChild(st);})();
+
+/* ---------- 6. more data visuals (so percent / up-down / numbers do not repeat) ---------- */
+function dataBg(sc,t){const im=scImg(sc)||groupPhoto(sc);const T_=THEMES[settings.studioTheme]||THEMES.blue;
+  if(im){fxImg(im,0,0,W,H,{z:1.25+.05*clamp(t/sc.dur),blur:14,g:(sc.fxg||0)+2,flip:!!sc.fxf,tint:.4});rect(0,0,W,H,'rgba(7,10,22,.72)');}
+  else{const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,T_.w1);g.addColorStop(1,T_.w2);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  ctx.save();ctx.globalAlpha=.06;for(let x=0;x<W;x+=120)line(x,0,x,H,'#fff',1);ctx.restore();}
+const dHead=sc=>shortText(PL(sc).head||scHead(sc)||sc.text,60);
+const firstPct=sc=>sc.q.find(isPct)||sc.q[0]||{v:0,unit:''};
+def('pctring','শতাংশ — গোল রিং',true,(sc,t,d)=>{dataBg(sc,t);const n=firstPct(sc);const pct=clamp(n.v/100);const p=eo(prog(t,.3,Math.min(2.2,d*.45)));
+  const cx=640,cy=520,r=270;ctx.lineCap='round';ctx.lineWidth=56;ctx.strokeStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.stroke();ctx.strokeStyle='#FFD21F';ctx.beginPath();ctx.arc(cx,cy,r,-1.5708,-1.5708+6.2832*pct*p);ctx.stroke();ctx.lineCap='butt';
+  const s=numStr(n,n.v*p);text(s,cx,cy+50,fitSize(s,380,150),'#fff','center',700);
+  rect(1060,330,12,eo(prog(t,.5,.5))*240,C.red);para(dHead(sc),1100,400,700,60,'#fff',3,1.25,700,'left',prog(t,.6,.8));if(n.label){ctx.save();ctx.globalAlpha=prog(t,1.2,.5);text(shortText(n.label,30),1100,700,38,'#FFD21F','left',600);ctx.restore();}},'ডেটা');
+def('pctbar','শতাংশ — লম্বা বার',true,(sc,t,d)=>{dataBg(sc,t);const n=firstPct(sc);const pct=clamp(n.v/100);const p=eo(prog(t,.5,Math.min(2,d*.4)));
+  para(dHead(sc),160,260,1600,66,'#fff',2,1.2,700,'left',prog(t,.1,.7));const x=160,y=520,w=1600,h=90;rr(x,y,w,h,45,'rgba(255,255,255,.14)');if(pct*p>0)rr(x,y,Math.max(h,w*pct*p),h,45,C.red);
+  for(let i=1;i<10;i++)rect(x+w*i/10,y+h+14,2,18,'rgba(255,255,255,.35)');const s=numStr(n,n.v*p);text(s,x+Math.max(h,w*pct*p)-24,y+66,52,'#fff','right',700);
+  ctx.save();ctx.globalAlpha=prog(t,1.4,.5);text(n.label?shortText(n.label,40):'১০০-এর মধ্যে '+toBn(Math.round(n.v)),x,y+200,40,'#FFD21F','left',600);ctx.restore();},'ডেটা');
+def('bigstat','বড় সংখ্যা — উপরে/নিচে তীর',true,(sc,t,d)=>{dataBg(sc,t);const n=sc.q[0]||{v:0,unit:''};const p=eo(prog(t,.3,Math.min(2,d*.4)));
+  const down=/কম|হ্রাস|কমে|পতন|কমেছে|নেমে/.test(sc.text),up=/বেড়|বৃদ্ধি|বাড়|ঊর্ধ্ব|উঠে/.test(sc.text);const col=down?'#3FC77A':up?'#FF5A36':'#FFD21F';
+  const s=numStr(n,n.v*p);const fs=fitSize(s,1000,230);text(s,W/2,560,fs,'#fff','center',700);
+  if(up||down){const ax=W/2+tw(s,fs)/2+110,ay=470,q=back(prog(t,.9,.5));if(q>0){ctx.save();ctx.translate(ax,ay+(down?40:-40)*(1-q));ctx.scale(q,down?-q:q);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(0,-90);ctx.lineTo(70,10);ctx.lineTo(25,10);ctx.lineTo(25,90);ctx.lineTo(-25,90);ctx.lineTo(-25,10);ctx.lineTo(-70,10);ctx.closePath();ctx.fill();ctx.restore();}}
+  rect(W/2-160,620,320*eo(prog(t,.6,.6)),8,col);ctx.save();ctx.globalAlpha=prog(t,.8,.6);const lb=n.label||dHead(sc);text(shortText(lb,50),W/2,710,fitSize(shortText(lb,50),1500,52),'#fff','center',600);ctx.restore();},'ডেটা');
+def('vs','তুলনা — দুই কার্ড',true,(sc,t,d)=>{dataBg(sc,t);const a=sc.q[0]||{v:0},b=sc.q[1]||{v:0};const pa=eo(prog(t,.3,1.2)),pb=eo(prog(t,.8,1.2));
+  [[a,pa,440,'#2E3CF2'],[b,pb,1480,C.red]].forEach(([n,p,x,c],i)=>{const q=back(prog(t,.15+i*.35,.6));if(q<=0)return;ctx.save();ctx.translate(x,500);ctx.scale(q,q);rr(-330,-230,660,460,24,'rgba(255,255,255,.96)');rect(-330,-230,660,16,c);const s=numStr(n,n.v*p);text(s,0,40,fitSize(s,560,130),c,'center',700);text(shortText(n.label||(i?'এখন':'আগে'),22),0,150,40,C.ink,'center',600);ctx.restore();});
+  const q=back(prog(t,.6,.5));if(q>0){ctx.save();ctx.translate(W/2,500);ctx.scale(q,q);circ(0,0,80,'#111');text('বনাম',0,16,40,'#fff','center',700);ctx.restore();}
+  ctx.save();ctx.globalAlpha=prog(t,1.2,.6);text(dHead(sc),W/2,880,fitSize(dHead(sc),1600,48),'#fff','center',600);ctx.restore();},'ডেটা');
+def('change','আগে → এখন পরিবর্তন',true,(sc,t,d)=>{dataBg(sc,t);const a=sc.q[0]||{v:0},b=sc.q[1]||{v:0};const ch=a.v?((b.v-a.v)/Math.abs(a.v))*100:0;const up=ch>=0;
+  const p1=eo(prog(t,.2,.6)),p2=eo(prog(t,1,.6)),pa=eo(prog(t,.6,.8));para(dHead(sc),160,230,1600,60,'#fff',2,1.2,700,'left',prog(t,0,.6));
+  ctx.save();ctx.globalAlpha=p1;text('আগে',420,430,40,'#B9C0D4','center',600);const s1=numStr(a,a.v);text(s1,420,580,fitSize(s1,520,120),'#fff','center',700);ctx.restore();
+  const ax=760,aw=420*pa;rect(ax,520,aw,16,up?'#FF5A36':'#3FC77A');if(pa>.95){ctx.fillStyle=up?'#FF5A36':'#3FC77A';ctx.beginPath();ctx.moveTo(ax+aw+40,528);ctx.lineTo(ax+aw-6,490);ctx.lineTo(ax+aw-6,566);ctx.closePath();ctx.fill();}
+  ctx.save();ctx.globalAlpha=p2;text('এখন',1480,430,40,'#B9C0D4','center',600);const s2=numStr(b,b.v);text(s2,1480,580,fitSize(s2,520,120),'#fff','center',700);ctx.restore();
+  if(isFinite(ch)&&a.v){const q=back(prog(t,1.4,.5));if(q>0){ctx.save();ctx.translate(970,700);ctx.scale(q,q);const s=(up?'+':'−')+toBn(Math.abs(ch).toFixed(Math.abs(ch)<10?1:0))+'%';rr(-150,-50,300,100,50,up?'#FF5A36':'#3FC77A');text(s,0,20,52,'#fff','center',700);ctx.restore();}}},'ডেটা');
+def('columns','কলাম চার্ট',true,(sc,t,d)=>{dataBg(sc,t);const items=sc.q.slice(0,6);const mx=Math.max(...items.map(n=>n.v))||1;const n=items.length;const gw=1400/n,bw=Math.min(180,gw*.6);
+  para(dHead(sc),160,200,1600,56,'#fff',2,1.2,700,'left',prog(t,0,.6));const base=860;line(240,base,1680,base,'rgba(255,255,255,.4)',2);
+  items.forEach((it,i)=>{const x=260+gw*i+gw/2;const p=eo(prog(t,.4+i*.18,.8));const h=480*(it.v/mx)*p;rr(x-bw/2,base-h,bw,h,10,it.v===mx?'#FFD21F':'rgba(255,255,255,.75)');if(p>.4)text(numStr(it,it.v*p),x,base-h-20,36,'#fff','center',700);text(shortText(it.label||toBn(i+1),10),x,base+50,30,'#C9CFDD','center',600);});},'ডেটা');
+const DATA_ROT={percent:['percent','pctring','pctbar','bigstat'],compare:['compare','vs','change'],bars:['bars','columns'],number:['number','bigstat'],money:['money','bigstat'],price:['price','change']};
+DATA_T.push('pctring','pctbar','bigstat','vs','change','columns');
+
+/* ---------- 7. layout: chapter index, news-own photos, data variety ---------- */
+{const _lay3=layout;layout=function(){let ch=0;scenes.forEach(sc=>{if(sc.isChapter&&!sc.special)ch++;sc.chIdx=Math.max(1,ch);});
+  // a photo from an older news never shows up in this news
+  if((settings.newsGroups||[]).length)scenes.forEach(sc=>{if(sc.autoPhoto!=null&&!galleryFor(sc).includes(sc.autoPhoto))sc.autoPhoto=null;});
+  const cnt={};scenes.forEach((sc,i)=>{const o=overrides[sc.raw]||{};if(o.type||PL(sc).t)return;const base=sc.baseType||sc.type;const rot=DATA_ROT[base];if(!rot)return;sc.baseType=base;let opts=rot.filter(r=>r!=='compare'&&r!=='vs'&&r!=='change'||sc.q.length>=2);const k=cnt[base]=(cnt[base]||0)+1;sc.type=opts[(k-1+(scenes.length%opts.length))%opts.length];});
+  _lay3();};}
+// photo focus must use this news's photos only
+{const _mm=matchMedia;matchMedia=function(sc,used){const r=_mm(sc,used);if(r<0)return r;if(!(settings.newsGroups||[]).length)return r;return galleryFor(sc).includes(r)?r:galleryFor(sc)[(sc.seed||0)%galleryFor(sc).length];};}
+// within the photo-focus pass the fallback rotation must also stay inside this news
+{const _lay4=layout;layout=function(){_lay4();if(!GALLERY.length||!(settings.newsGroups||[]).length)return;let ch=false;scenes.forEach(sc=>{if(sc.autoPhoto!=null&&!galleryFor(sc).includes(sc.autoPhoto)){const c=galleryFor(sc);sc.autoPhoto=c[(sc.seed||0)%c.length];ch=true;}});if(ch)assignShots(scenes);};}
+
+/* ---------- 8. studio wall behind the reader: 4 looks, always graded ---------- */
+STUDIO.bgphoto=function(sc,t){const m=scImg(sc)||groupPhoto(sc);if(!m)return STUDIO.close(sc,t);const T_=th();const wallB=H*.8;const k=clamp(t/sc.dur);const v=((sc.fxv||0)+(sc.seed||0))%4;const g=sc.fxg||0,fl=!!sc.fxf;
+  ctx.fillStyle=T_.floor;ctx.fillRect(0,0,W,H);ctx.save();ctx.beginPath();ctx.rect(0,0,W,wallB);ctx.clip();
+  if(v===0){fxImg(m,0,0,W,wallB,{z:1.1+.07*k,px:40-80*k,g,flip:fl});}
+  else if(v===1){const gd=ctx.createLinearGradient(0,0,0,wallB);gd.addColorStop(0,T_.w1);gd.addColorStop(1,T_.w2);ctx.fillStyle=gd;ctx.fillRect(0,0,W,wallB);const crops=[[0,0,.6,1],[.2,0,.6,1],[.4,0,.6,1]];
+    crops.forEach((c,i)=>{const p=eo(prog(t,.1+i*.2,.7));const x=60+i*610,y=70+(1-p)*-wallB;ctx.save();ctx.beginPath();ctx.rect(x,y,580,wallB-140);ctx.clip();fxImg(m,x,y,580,wallB-140,{z:1.05+.06*k,crop:c,g:g+i,flip:i===1?!fl:fl});ctx.restore();srect(x,y,580,wallB-140,'rgba(255,255,255,.25)',3);});}
+  else if(v===2){studioBg(t,{noBrand:true});const p=back(prog(t,.1,.7));ctx.save();ctx.translate(1300,380);ctx.transform(1,-.06,0,1,0,0);ctx.scale(p,p);rect(-520,-300,1040,600,'#05070D');fxImg(m,-500,-280,1000,560,{z:1.05+.06*k,g,flip:fl});rect(-520,-300,1040,8,T_.acc);ctx.restore();
+    for(let q=0;q<4;q++){const x=((t*120+q*500)%(W+600))-300;ctx.save();ctx.globalAlpha=.06;poly([x,0,x+80,0,x-140,wallB,x-220,wallB],'#fff');ctx.restore();}}
+  else{fxImg(m,0,0,W,wallB,{z:1.15+.05*k,px:-40*k,filter:'grayscale(1) contrast(1.25)',noTint:true,flip:fl});ctx.globalCompositeOperation='multiply';rect(0,0,W,wallB,T_.acc);ctx.globalCompositeOperation='source-over';
+    for(let q=0;q<6;q++){const y=((t*60+q*160)%wallB);ctx.save();ctx.globalAlpha=.08;rect(0,y,W,40,'#fff');ctx.restore();}}
+  const gd=ctx.createLinearGradient(0,0,W,0);gd.addColorStop(0,'rgba(5,10,28,.65)');gd.addColorStop(.45,'rgba(5,10,28,.2)');gd.addColorStop(1,'rgba(5,10,28,0)');ctx.fillStyle=gd;ctx.fillRect(0,0,W,wallB);
+  ctx.globalAlpha=.05;for(let y=0;y<wallB;y+=6)rect(0,y,W,2,'#000');ctx.restore();
+  for(let q=0;q<3;q++){ctx.save();ctx.globalAlpha=.55;rect(0,wallB-6-q*3,W,2,T_.acc);ctx.restore();}
+  rect(0,wallB,W,H-wallB,T_.floor);ctx.save();ctx.globalAlpha=.1;for(let q=0;q<6;q++)line(0,wallB+18+q*q*8,W,wallB+18+q*q*8,'#fff',2);ctx.restore();
+  const ax=v===1?1280:(v===2?560:660);const mo=mouthLevel(t);anchorFig(ax,930,1.55,{mouth:mo,t,seed:6,look:v===1?-.15:.12});newsDesk(ax,930,1250,1.35);anchorHands(ax,930,1.55,t);studioLower(sc,t);};
 
 /* ============ NEWS: live papers feed + paper portal (from TF FB Reels & Post Card Maker) ============ */
 const NW_FEED='https://raw.githubusercontent.com/taiful666/TFCRFBPOSTMAKERAIMOBILE/live-news/news.json';
@@ -2063,14 +2167,15 @@ async function nwImgBlob(url){
 function nwBusy(t){const o=$('#nwBusy');if(t==null){o.classList.add('hidden');return;}$('#nwBusyTxt').textContent=t;o.classList.remove('hidden');}
 function nwToScript(arts){return arts.map(a=>{const s=(a.text||a.title).replace(/\s+/g,' ').split(/(?<=[।!?])\s+/).map(x=>x.trim()).filter(x=>x.length>6).slice(0,12);const sc=[];for(let i=0;i<s.length;i+=2)sc.push(s.slice(i,i+2).join(' '));return'# '+a.title+'\n\n'+(sc.join('\n\n')||a.title);}).join('\n\n');}
 async function nwUse(list){
-  nwCloseSheet();const arts=[];let photos=0;
+  nwCloseSheet();const arts=[];let photos=0;const groups=[];
   for(let i=0;i<list.length;i++){
     nwBusy(list.length>1?`খবর ${toBn(i+1)}/${toBn(list.length)} আনা হচ্ছে…`:'পুরো খবর আনা হচ্ছে…');
-    const a=await nwArticle(list[i]);if(!a.title&&!a.text)continue;arts.push(a);
-    if(a.img){nwBusy('ছবি লাইব্রেরিতে যোগ হচ্ছে…');try{const name=shortText(a.title,70).replace(/[\\/:*?"<>|]/g,' ');if(!GALLERY.some(g=>g.name===name)){const b=await nwImgBlob(a.img);const f=new File([b],name+(b.type==='image/png'?'.png':b.type==='image/webp'?'.webp':'.jpg'),{type:b.type});await addGalleryFiles([f],{query:a.title,credit:a.srcName});}photos++;}catch(e){}}
+    const a=await nwArticle(list[i]);if(!a.title&&!a.text)continue;arts.push(a);const gid='n'+Date.now().toString(36)+i;groups.push(gid);
+    if(a.img){nwBusy('ছবি লাইব্রেরিতে যোগ হচ্ছে…');try{const name=shortText(a.title,70).replace(/[\\/:*?"<>|]/g,' ');const ex=GALLERY.find(g=>g.name===name);if(ex){ex.group=gid;await saveGallery();}else{const b=await nwImgBlob(a.img);const f=new File([b],name+(b.type==='image/png'?'.png':b.type==='image/webp'?'.webp':'.jpg'),{type:b.type});await addGalleryFiles([f],{query:a.title,credit:a.srcName,group:gid});}photos++;}catch(e){}}
   }
+  settings.newsGroups=groups;save();renderGallery();
   nwBusy(null);if(!arts.length){alert('খবরটা আনা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।');return false;}
-  const raw=arts.length===1?`${arts[0].title}\n\n${arts[0].text}\n\n(সূত্র: ${arts[0].srcName})`:`নিচের ${toBn(arts.length)}টি খবর দিয়ে একটা নিউজ বুলেটিন বানান — প্রতিটি খবর আলাদা অধ্যায় (#) হবে।\n\n`+arts.map((a,i)=>`খবর ${toBn(i+1)}: ${a.title}\n${a.text.slice(0,1800)}\n(সূত্র: ${a.srcName})`).join('\n\n---\n\n');
+  const raw=arts.length===1?`${arts[0].title}\n\n${arts[0].text}\n\n(সূত্র: ${arts[0].srcName})`:`নিচের ${toBn(arts.length)}টি খবর দিয়ে একটা নিউজ বুলেটিন বানান — প্রতিটি খবর আলাদা অধ্যায় (#) হবে — খবরগুলোর ক্রম ঠিক এভাবেই রাখুন (খবর ১ = প্রথম অধ্যায়, খবর ২ = দ্বিতীয় অধ্যায়…), কারণ প্রতিটি খবরের ছবি আলাদা।\n\n`+arts.map((a,i)=>`খবর ${toBn(i+1)}: ${a.title}\n${a.text.slice(0,1800)}\n(সূত্র: ${a.srcName})`).join('\n\n---\n\n');
   $('#rawText').value=raw;$('#rawText').dispatchEvent(new Event('input'));
   if(arts.length>1){const l=$('#len');if(l&&+l.value<180)nwSetSel('len','180');}
   const key=settings.provider==='gemini'?$('#gkey').value:$('#ckey').value;
