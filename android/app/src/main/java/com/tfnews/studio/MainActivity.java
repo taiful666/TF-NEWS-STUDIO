@@ -31,12 +31,17 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.ByteArrayOutputStream;
+import org.json.JSONObject;
 
 public class MainActivity extends Activity {
 
     private static final String HOME = "https://appassets.androidplatform.net/assets/www/index.html";
     private static final int REQ_FILE = 11;
     private static final int REQ_MIC = 12;
+    private static final int REQ_BROWSE = 13;
 
     private WebView web;
     private ValueCallback<Uri[]> fileCallback;
@@ -173,6 +178,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_BROWSE) {
+            if (resultCode == RESULT_OK && data != null && data.getStringExtra("page") != null) {
+                final String page = data.getStringExtra("page");
+                web.evaluateJavascript("window.tfPickedNews && window.tfPickedNews(" + page + ")", null);
+            }
+            return;
+        }
         if (requestCode != REQ_FILE || fileCallback == null) return;
         Uri[] result = null;
         if (resultCode == RESULT_OK && data != null) {
@@ -309,6 +321,68 @@ public class MainActivity extends Activity {
                     d.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
                 }
             });
+        }
+
+        @JavascriptInterface
+        public void openBrowser(final String url, final boolean adblock) {
+            runOnUiThread(() -> {
+                Intent i = new Intent(MainActivity.this, BrowserActivity.class);
+                i.putExtra("url", url);
+                i.putExtra("adblock", adblock);
+                startActivityForResult(i, REQ_BROWSE);
+            });
+        }
+
+        /** Async GET without CORS limits. Result: window.tfHttpCb(id, ok, data). b64=true returns base64 bytes. */
+        @JavascriptInterface
+        public void httpGet(final String id, final String url, final boolean b64) {
+            new Thread(() -> {
+                String out;
+                boolean ok = false;
+                try {
+                    String u = url;
+                    HttpURLConnection c = null;
+                    for (int hop = 0; hop < 6; hop++) {
+                        c = (HttpURLConnection) new URL(u).openConnection();
+                        c.setInstanceFollowRedirects(false);
+                        c.setConnectTimeout(15000);
+                        c.setReadTimeout(25000);
+                        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36");
+                        c.setRequestProperty("Accept-Language", "bn-BD,bn;q=0.9,en;q=0.8");
+                        int code = c.getResponseCode();
+                        if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) {
+                            u = new URL(new URL(u), c.getHeaderField("Location")).toString();
+                            c.disconnect();
+                            continue;
+                        }
+                        break;
+                    }
+                    int code = c.getResponseCode();
+                    InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+                    ByteArrayOutputStream bo = new ByteArrayOutputStream();
+                    if (in != null) {
+                        byte[] buf = new byte[16384];
+                        int n;
+                        while ((n = in.read(buf)) > 0) {
+                            bo.write(buf, 0, n);
+                            if (bo.size() > 12 * 1024 * 1024) break;
+                        }
+                        in.close();
+                    }
+                    ok = code < 400;
+                    if (b64) {
+                        String ct = c.getContentType();
+                        out = (ct == null ? "" : ct) + "|" + Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP);
+                    } else {
+                        out = bo.toString("UTF-8");
+                    }
+                    c.disconnect();
+                } catch (Exception e) {
+                    out = String.valueOf(e.getMessage());
+                }
+                final String js = "window.tfHttpCb && window.tfHttpCb(" + JSONObject.quote(id) + "," + ok + "," + JSONObject.quote(out) + ")";
+                runOnUiThread(() -> web.evaluateJavascript(js, null));
+            }).start();
         }
 
         @JavascriptInterface

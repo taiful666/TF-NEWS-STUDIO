@@ -30,9 +30,9 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .btn.sm{min-height:44px;font-size:15px;border-radius:22px;width:auto;padding:0 16px}
 .btn:disabled{opacity:.45}
 .bottom{flex-shrink:0;padding:12px 20px 20px;background:var(--bg);display:flex;flex-direction:column;gap:8px;border-top:1px solid transparent}
-.nav{flex-shrink:0;background:var(--surf);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:8px 8px 14px}
+.nav{flex-shrink:0;background:var(--surf);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 4px 14px}
 .nav a{text-decoration:none;color:var(--t2);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;min-height:48px}
-.nav a span.pill{width:64px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.nav a span.pill{width:56px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
 .nav a.on{color:var(--tx);font-weight:600}.nav a.on span.pill{background:var(--acs);color:var(--ac)}
 h2.sec{font-size:13px;font-weight:600;color:var(--t2);margin:22px 4px 8px}
 .group{background:var(--surf);border:1px solid var(--bd);border-radius:20px;overflow:hidden}
@@ -124,10 +124,43 @@ body.live #liveWrap canvas{width:100vw!important;height:100vh!important;object-f
 details.help{background:var(--surf);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;font-size:14px;line-height:1.7;margin-top:12px}
 details.help summary{font-weight:600;cursor:pointer}
 .tabs{display:none}
+/* news */
+.cta.alt{background:var(--surf);color:var(--tx);border:1px solid var(--bd);margin-top:10px;padding:16px 20px}.cta.alt .c{background:var(--acs);color:var(--ac);width:48px;height:48px}.cta.alt b{font-size:17px}.cta.alt small{color:var(--t2);opacity:1}
+.nwstat{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--t2);margin:2px 4px 12px;line-height:1.45}.nwstat small{display:block;font-size:12px}
+.nwstat .dot{width:8px;height:8px;border-radius:4px;background:#1DB954;margin-top:7px;flex-shrink:0;box-shadow:0 0 0 4px rgba(29,185,84,.15)}
+#nwQ{margin-bottom:10px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;margin:0 -20px;padding-left:20px;padding-right:20px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chips button{flex-shrink:0;min-height:36px;border:1px solid var(--bd);background:var(--surf);border-radius:18px;padding:0 14px;font-size:14px;color:var(--t2)}
+.chips button.on{background:var(--tx);border-color:var(--tx);color:#fff}
+.nwlist{background:var(--surf);border:1px solid var(--bd);border-radius:20px;overflow:hidden}
+.nwi{display:flex;gap:12px;align-items:center;padding:12px 8px 12px 12px;border-top:1px solid var(--bd);cursor:pointer}.nwi:first-child{border-top:0}.nwi:active{background:#F7F4EF}
+.nwi img,.nwi .ph{width:88px;height:66px;border-radius:12px;object-fit:cover;flex-shrink:0;background:#ECE5D5}
+.nwi .t{flex:1;min-width:0}.nwi .t b{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;font-weight:600;line-height:1.4}
+.nwi .t small{display:block;font-size:12px;color:var(--t2);margin-top:4px}.nwi i.new{font-style:normal;color:var(--ac);font-weight:700;margin-right:6px}
+.nwi .bk{width:44px;height:44px;border-radius:22px;border:1px solid var(--bd);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t2);padding:0}
+.nwi .bk.on{background:var(--acs);border-color:var(--acs);color:var(--ac)}.nwi .bk svg.i{width:20px;height:20px}
+#nwMore{margin:14px auto 0;display:flex}
+.ib.spin svg{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.basket{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px 10px 20px;background:var(--tx);color:#fff}
+.basket b{flex:1;font-size:15px;font-weight:600}.basket button{min-height:40px;border-radius:20px;border:0;padding:0 14px;font-size:14px;font-weight:600}
+.basket .g{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)}.basket .p{background:var(--ac);color:#fff}
+.papers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pp{position:relative;text-decoration:none;color:var(--tx);background:var(--surf);border:1px solid var(--bd);border-radius:18px;padding:14px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.pp:active{background:#F7F4EF}.pl{width:44px;height:44px;border-radius:14px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700}
+.pn{font-size:13px;line-height:1.3;font-weight:500}.pdel{position:absolute;top:4px;right:4px;width:28px;height:28px;border:0;border-radius:14px;background:#F1EDE6;color:var(--t2);font-size:16px;line-height:1;padding:0}
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(17,18,22,.45);display:flex;align-items:flex-end}
+.sheet .sb{background:var(--bg);width:100%;max-height:92vh;overflow-y:auto;border-radius:24px 24px 0 0;padding:10px 20px 22px;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:#D8D2C8;margin:0 auto 12px}
+#nwsImg img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;display:block;background:#ECE5D5}
+#nwsTitle{font-size:20px;font-weight:700;line-height:1.4;margin:14px 0 4px}#nwsMeta{font-size:13px;color:var(--t2)}#nwsDesc{font-size:15px;line-height:1.6;color:#3C3A36;margin:10px 0 16px}
+.sheet .acts{display:flex;flex-direction:column;gap:8px}
+.ovl{position:fixed;inset:0;z-index:60;background:rgba(250,248,244,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-size:17px;font-weight:600}
+.ovl .spn{width:44px;height:44px;border-radius:50%;border:4px solid var(--bd);border-top-color:var(--ac);animation:sp .8s linear infinite}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M12 19 l-7-7 7-7M19 12H5"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5 l7 7-7 7"/></symbol><symbol id="i-audio-lines" viewBox="0 0 24 24"><path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 18 l6-6-6-6"/></symbol><symbol id="i-clapperboard" viewBox="0 0 24 24"><path d="M12.296 3.464 l3.02 3.956M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3zM3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM6.18 5.276 l3.1 3.899"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10 l5 5 5-5"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol><symbol id="i-folder-open" viewBox="0 0 24 24"><path d="M6 14 l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><path d="M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol><symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2zM7 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M21 15 l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol><symbol id="i-images" viewBox="0 0 24 24"><path d="M22 11 l-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2M12 7a1 1 0 1 0 2 0a1 1 0 1 0 -2 0M10 2h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2z"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 19v3M19 10v2a7 7 0 0 1-14 0v-2M12 2h0a3 3 0 0 1 3 3v7a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3v-7a3 3 0 0 1 3 -3z"/></symbol><symbol id="i-monitor-smartphone" viewBox="0 0 24 24"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8M10 19v-3.96 3.15M7 19h5M18 12h2a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2z"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol><symbol id="i-radio" viewBox="0 0 24 24"><path d="M16.247 7.761a6 6 0 0 1 0 8.478M19.075 4.933a10 10 0 0 1 0 14.134M4.925 19.067a10 10 0 0 1 0-14.134M7.753 16.239a6 6 0 0 1 0-8.478M10 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/></symbol><symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/></symbol><symbol id="i-settings-2" viewBox="0 0 24 24"><path d="M14 17H5M19 7h-9M14 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M4 7a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/></symbol><symbol id="i-smartphone" viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-16a2 2 0 0 1 2 -2zM12 18h.01"/></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594zM20 2v4M22 4h-4M2 20a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/></symbol><symbol id="i-wand-sparkles" viewBox="0 0 24 24"><path d="M21.64 3.64 l-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72M14 7 l3 3M5 6v4M19 14v4M10 2v2M7 8H3M21 16h-4M11 3H9"/></symbol></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M12 19 l-7-7 7-7M19 12H5"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5 l7 7-7 7"/></symbol><symbol id="i-audio-lines" viewBox="0 0 24 24"><path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 18 l6-6-6-6"/></symbol><symbol id="i-clapperboard" viewBox="0 0 24 24"><path d="M12.296 3.464 l3.02 3.956M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3zM3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM6.18 5.276 l3.1 3.899"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10 l5 5 5-5"/></symbol><symbol id="i-external-link" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol><symbol id="i-folder-open" viewBox="0 0 24 24"><path d="M6 14 l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><path d="M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol><symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2zM7 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M21 15 l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol><symbol id="i-images" viewBox="0 0 24 24"><path d="M22 11 l-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2M12 7a1 1 0 1 0 2 0a1 1 0 1 0 -2 0M10 2h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2z"/></symbol><symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83zM2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 19v3M19 10v2a7 7 0 0 1-14 0v-2M12 2h0a3 3 0 0 1 3 3v7a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3v-7a3 3 0 0 1 3 -3z"/></symbol><symbol id="i-monitor-smartphone" viewBox="0 0 24 24"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8M10 19v-3.96 3.15M7 19h5M18 12h2a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2z"/></symbol><symbol id="i-newspaper" viewBox="0 0 24 24"><path d="M15 18h-5M18 14h-8M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2M11 6h6a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1z"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol><symbol id="i-radio" viewBox="0 0 24 24"><path d="M16.247 7.761a6 6 0 0 1 0 8.478M19.075 4.933a10 10 0 0 1 0 14.134M4.925 19.067a10 10 0 0 1 0-14.134M7.753 16.239a6 6 0 0 1 0-8.478M10 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/></symbol><symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/></symbol><symbol id="i-settings-2" viewBox="0 0 24 24"><path d="M14 17H5M19 7h-9M14 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M4 7a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/></symbol><symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12 l2 2 4-4"/></symbol><symbol id="i-smartphone" viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-16a2 2 0 0 1 2 -2zM12 18h.01"/></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594zM20 2v4M22 4h-4M2 20a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/></symbol><symbol id="i-wand-sparkles" viewBox="0 0 24 24"><path d="M21.64 3.64 l-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72M14 7 l3 3M5 6v4M19 14v4M10 2v2M7 8H3M21 16h-4M11 3H9"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6 l12 12"/></symbol></defs></svg>
 
 <!-- ================= HOME ================= -->
 <section class="screen on" id="s-home">
@@ -135,6 +168,7 @@ details.help summary{font-weight:600;cursor:pointer}
   <div class="scroll">
     <div class="hero"><b id="greet">শুভ সকাল</b><span>আজ কোন খবরের ভিডিও বানাবেন?</span></div>
     <a href="#" class="cta" data-go="create"><span class="c"><svg class="i"><use href="#i-plus"/></svg></span><span><b>নতুন ভিডিও</b><small>খবর পেস্ট করুন, AI বাকিটা সাজাবে</small></span></a>
+    <a href="#" class="cta alt" data-go="news"><span class="c"><svg class="i"><use href="#i-newspaper"/></svg></span><span><b>পত্রিকা থেকে খবর নিন</b><small>লাইভ খবরে এক চাপ — খবর আর ছবি নিজেই বসবে</small></span></a>
     <div class="quick">
       <a href="#" data-go="create"><span><svg class="i"><use href="#i-sparkles"/></svg></span>স্ক্রিপ্ট</a>
       <a href="#" data-go="create" data-preset="studio"><span><svg class="i"><use href="#i-mic"/></svg></span>স্টুডিও</a>
@@ -145,6 +179,36 @@ details.help summary{font-weight:600;cursor:pointer}
     <div class="group"><a href="#" class="proj" data-go="preview"><span class="th"><svg class="i"><use href="#i-clapperboard"/></svg></span><span class="tx"><b id="hpTitle">—</b><small id="hpMeta"></small></span><span style="color:var(--t2)"><svg class="i"><use href="#i-chevron-right"/></svg></span></a></div>
     <p class="hint">আপনার কাজ ফোনেই সেভ থাকে। অ্যাপ বন্ধ করলেও হারাবে না।</p>
   </div>
+  <nav class="nav"></nav>
+</section>
+
+<!-- ================= NEWS ================= -->
+<section class="screen" id="s-news">
+  <div class="appbar root"><h1>খবর</h1><button class="ib" id="nwRefresh" aria-label="এখনই আপডেট"><svg class="i"><use href="#i-refresh-cw"/></svg></button></div>
+  <div style="padding:0 20px 10px;flex-shrink:0"><div class="segc" id="nwTabs"><button data-t="live" class="on">লাইভ খবর</button><button data-t="papers">পত্রিকা</button></div></div>
+  <div class="scroll" id="nwLive">
+    <div class="nwstat"><span class="dot"></span><span id="nwStat">লোড হচ্ছে…</span></div>
+    <input id="nwQ" type="text" placeholder="খবর খুঁজুন (যেমন: বৃষ্টি, নির্বাচন)" aria-label="খবর খুঁজুন">
+    <div class="chips" id="nwChips"></div>
+    <div id="nwList" class="nwlist"></div>
+    <button class="btn sec sm hidden" id="nwMore">আরও খবর দেখুন</button>
+    <p class="hint">খবরে চাপ দিন → "এই খবর দিয়ে ভিডিও বানান"। <b>＋</b> চেপে কয়েকটা খবর ঝুড়িতে রাখলে একসাথে বুলেটিন হবে।</p>
+  </div>
+  <div class="scroll hidden" id="nwPapers">
+    <div class="group">
+      <div class="row"><span class="ico"><svg class="i"><use href="#i-shield-check"/></svg></span><span class="lab"><b>বিজ্ঞাপন বন্ধ রাখুন</b><small>পত্রিকা খোলার সময় অ্যাড আটকে দেবে</small></span><input type="checkbox" class="sw" id="nwAd" aria-label="বিজ্ঞাপন বন্ধ"></div>
+      <div class="row"><span class="ico"><svg class="i"><use href="#i-sparkles"/></svg></span><span class="lab"><b>খবর নিলেই AI সাজাবে</b><small>API কী থাকলে সাথে সাথে স্ক্রিপ্ট ও দৃশ্য</small></span><input type="checkbox" class="sw" id="nwAuto" aria-label="খবর নিলেই AI সাজাবে"></div>
+    </div>
+    <p class="hint">পত্রিকা খুলে যে খবরটা চান সেটার ভেতরে ঢুকুন, তারপর নিচের লাল <b>"＋ এই খবর নিন"</b> বাটন চাপুন।</p>
+    <h2 class="sec">খবরের লিংক পেস্ট করুন</h2>
+    <div style="display:flex;gap:8px"><input id="ppLink" type="text" placeholder="https://…" aria-label="খবরের লিংক"><button class="btn sm" id="ppLinkGo" style="flex-shrink:0">আনুন</button></div>
+    <h2 class="sec">দৈনিক পত্রিকা</h2><div class="papers" id="ppP"></div>
+    <h2 class="sec">টিভি চ্যানেল</h2><div class="papers" id="ppTv"></div>
+    <h2 class="sec">অনলাইন</h2><div class="papers" id="ppOn"></div>
+    <h2 class="sec">আমার পত্রিকা</h2><div class="papers" id="ppMy"></div>
+    <div class="group" style="margin-top:12px"><div class="row col"><input id="ppName" type="text" placeholder="পত্রিকার নাম" aria-label="পত্রিকার নাম"><input id="ppUrl" type="text" placeholder="লিংক, যেমন: www.example.com" aria-label="পত্রিকার লিংক"><button class="btn sec sm" id="ppAdd"><svg class="i"><use href="#i-plus"/></svg> যোগ করুন</button></div></div>
+  </div>
+  <div class="basket hidden" id="nwBasket"><b id="nwBasketN"></b><button class="g" id="nwBShow">দেখুন</button><button class="g" id="nwBClear">খালি</button><button class="p" id="nwBUse">বুলেটিন বানান</button></div>
   <nav class="nav"></nav>
 </section>
 
@@ -336,7 +400,7 @@ details.help summary{font-weight:600;cursor:pointer}
       <div class="row col"><label for="tickerText">টিকারের লেখা (প্রতি লাইনে একটা)</label><textarea id="tickerText" rows="4" placeholder="খালি রাখলে সাধারণ কিছু লেখা চলবে"></textarea></div>
       <div class="row col"><label for="tickerSpeed">গতি</label><input id="tickerSpeed" type="range" min="60" max="320"></div>
     </div>
-    <p class="hint" style="text-align:center;margin-top:24px">TF News Studio · সংস্করণ 1.0</p>
+    <p class="hint" style="text-align:center;margin-top:24px">TF News Studio · সংস্করণ 1.1</p>
   </div>
   <nav class="nav"></nav>
 </section>
@@ -347,6 +411,7 @@ details.help summary{font-weight:600;cursor:pointer}
   <div class="scroll">
     <div class="group">
       <div class="row col"><label for="liveItems">নিজের শিরোনাম (প্রতি লাইনে একটা)</label><textarea id="liveItems" rows="4" placeholder="যেমন: রাজধানীতে টানা বৃষ্টিতে জলাবদ্ধতা"></textarea></div>
+      <div class="row"><span class="lab"><b>TF লাইভ পত্রিকার খবর</b><small>৩০টি পত্রিকা, প্রতি ১০ মিনিটে নতুন</small></span><input type="checkbox" class="sw" id="liveTF" aria-label="TF লাইভ পত্রিকার খবর"></div>
       <div class="row"><span class="lab"><b>পত্রিকার খবর নিজে আনবে</b><small>RSS ফিড থেকে</small></span><input type="checkbox" class="sw" id="liveAuto" aria-label="পত্রিকার খবর নিজে আনবে"></div>
       <div class="row col"><label for="liveRss">RSS ফিডের লিংক</label><textarea id="liveRss" rows="2"></textarea></div>
       <div class="row"><span class="lab"><b>প্রতি খবর (সেকেন্ড)</b></span><input id="liveSec" type="number" min="5" max="60" style="width:90px"></div>
@@ -373,6 +438,12 @@ details.help summary{font-weight:600;cursor:pointer}
 </div>
 <div class="ov hidden" id="saveOv"><div id="saveTxt" style="font-size:20px;font-weight:700;text-align:center;line-height:1.5">সেভ হচ্ছে…</div><div class="bar"><div id="saveBar"></div></div>
   <div id="saveDone" class="hidden" style="display:flex;flex-direction:column;gap:10px;width:min(320px,90vw);margin-top:10px"><button class="btn" id="shareBtn">শেয়ার করুন</button><button class="btn sec" id="saveOk" style="background:#23252C;color:#fff;border:0">ঠিক আছে</button></div></div>
+<div class="sheet hidden" id="nwSheet"><div class="sb"><div class="grab"></div>
+  <div id="nwsImg"></div><div id="nwsTitle"></div><div id="nwsMeta"></div><div id="nwsDesc"></div>
+  <div class="acts"><button class="btn" id="nwsUse"><svg class="i"><use href="#i-clapperboard"/></svg> এই খবর দিয়ে ভিডিও বানান</button><button class="btn sec" id="nwsBasket"></button><button class="btn sec" id="nwsOpen"><svg class="i"><use href="#i-external-link"/></svg> পত্রিকায় পুরোটা পড়ুন</button><button class="btn sec" id="nwsClose" style="border:0;background:transparent">বন্ধ করুন</button></div>
+</div></div>
+<div class="sheet hidden" id="nwBSheet"><div class="sb"><div class="grab"></div><h2 class="sec" style="margin-top:0">বুলেটিনের ঝুড়ি</h2><div class="group" id="nwBList"></div><button class="btn sec" id="nwBDone" style="margin-top:12px">ঠিক আছে</button></div></div>
+<div class="ovl hidden" id="nwBusy"><div class="spn"></div><div id="nwBusyTxt">খবর আনা হচ্ছে…</div></div>
 <div id="liveWrap"></div>
 <div class="ov hidden" id="liveStartOv"><div style="font-size:24px;font-weight:700;margin-bottom:10px">লাইভ নিউজ</div><div id="liveInfo" style="opacity:.8;margin-bottom:20px;text-align:center"></div><button class="btn" id="liveGo" style="width:min(320px,90vw)">▶ লাইভ শুরু করুন</button><p style="opacity:.6;max-width:320px;text-align:center;line-height:1.6">বের হতে ফোনের "ফিরে যান" বাটন চাপুন।</p></div>
 <script>
@@ -1672,9 +1743,9 @@ window.__tf={renderAt:t=>renderAt(t),get scenes(){return scenes;},get total(){re
 
 /* ============ MOBILE APP LAYER ============ */
 const IS_APP=!!(window.Android&&window.Android.saveBegin);
-const NAVS=['home','projects','library','settings'];
+const NAVS=['home','news','projects','library','settings'];
 let stack=['home'];
-(function buildNav(){const items=[['home','house','হোম'],['projects','folder','প্রজেক্ট'],['library','images','লাইব্রেরি'],['settings','settings','সেটিংস']];
+(function buildNav(){const items=[['home','house','হোম'],['news','newspaper','খবর'],['projects','folder','প্রজেক্ট'],['library','images','লাইব্রেরি'],['settings','settings','সেটিংস']];
   document.querySelectorAll('nav.nav').forEach(n=>{n.innerHTML=items.map(([id,ic,l])=>`<a href="#" data-go="${id}"><span class="pill"><svg class="i"><use href="#i-${ic}"/></svg></span>${l}</a>`).join('');});})();
 function go(id,push=true){
   if(LIVE)return;
@@ -1689,6 +1760,8 @@ function go(id,push=true){
 }
 window.tfBack=function(){
   if(LIVE){location.hash='';location.reload();return true;}
+  if($('#nwBusy')&&!$('#nwBusy').classList.contains('hidden'))return true;
+  for(const id of ['nwSheet','nwBSheet']){const el=$('#'+id);if(el&&!el.classList.contains('hidden')){el.classList.add('hidden');return true;}}
   if(!$('#saveOv').classList.contains('hidden')){$('#saveOv').classList.add('hidden');return true;}
   if(!$('#tp').classList.contains('hidden')){$('#tpCancel').click();return true;}
   if(!$('#exOv').classList.contains('hidden'))return true;
@@ -1753,6 +1826,153 @@ if(!LIVE)go('home');
 // first paint
 setTimeout(()=>{syncSegs();syncProv();syncMirrors();updateHome();},300);
 setInterval(()=>{if(document.querySelector('#s-home.on'))updateHome();},5000);
+
+/* ============ NEWS: live papers feed + paper portal (from TF FB Reels & Post Card Maker) ============ */
+const NW_FEED='https://raw.githubusercontent.com/taiful666/TFCRFBPOSTMAKERAIMOBILE/live-news/news.json';
+const NW_SRC={prothomalo:'প্রথম আলো',jamuna:'যমুনা টিভি',kalbela:'কালবেলা',bdnews24:'বিডিনিউজ২৪',jugantor:'যুগান্তর',kalerkantho:'কালের কণ্ঠ',samakal:'সমকাল',somoy:'সময় টিভি',jagonews:'জাগো নিউজ',dailystarbn:'ডেইলি স্টার বাংলা',ittefaq:'ইত্তেফাক',bdpratidin:'বাংলাদেশ প্রতিদিন',rtv:'আরটিভি',channel24:'চ্যানেল ২৪',ekattor:'একাত্তর টিভি',ntv:'এনটিভি',channeli:'চ্যানেল আই',dhakapost:'ঢাকা পোস্ট',banglatribune:'বাংলা ট্রিবিউন',banglanews24:'বাংলানিউজ২৪',risingbd:'রাইজিংবিডি',ajkerpatrika:'আজকের পত্রিকা',deshrupantor:'দেশ রূপান্তর',nayadiganta:'নয়া দিগন্ত',manabzamin:'মানবজমিন',inqilab:'ইনকিলাব',bbcbangla:'বিবিসি বাংলা',dailystar:'দ্য ডেইলি স্টার',google:'গুগল নিউজ'};
+const NW_PAPERS=[
+ ['p','প্রথম আলো','https://www.prothomalo.com/'],['p','কালের কণ্ঠ','https://www.kalerkantho.com/'],['p','যুগান্তর','https://www.jugantor.com/'],['p','সমকাল','https://samakal.com/'],['p','ইত্তেফাক','https://www.ittefaq.com.bd/'],['p','বাংলাদেশ প্রতিদিন','https://www.bd-pratidin.com/'],['p','কালবেলা','https://www.kalbela.com/'],['p','আজকের পত্রিকা','https://www.ajkerpatrika.com/'],['p','দেশ রূপান্তর','https://www.deshrupantor.com/'],['p','নয়া দিগন্ত','https://www.dailynayadiganta.com/'],['p','মানবজমিন','https://mzamin.com/'],['p','ইনকিলাব','https://dailyinqilab.com/'],['p','জনকণ্ঠ','https://www.dailyjanakantha.com/'],['p','ভোরের কাগজ','https://www.bhorerkagoj.com/'],['p','বণিক বার্তা','https://bonikbarta.com/'],['p','ডেইলি স্টার বাংলা','https://bangla.thedailystar.net/'],['p','দ্য ডেইলি স্টার','https://www.thedailystar.net/'],['p','ঢাকা ট্রিবিউন','https://www.dhakatribune.com/'],['p','বিজনেস স্ট্যান্ডার্ড','https://www.tbsnews.net/'],
+ ['tv','সময় টিভি','https://www.somoynews.tv/'],['tv','যমুনা টিভি','https://jamuna.tv/'],['tv','চ্যানেল ২৪','https://www.channel24bd.tv/'],['tv','একাত্তর টিভি','https://ekattor.tv/'],['tv','আরটিভি','https://www.rtvonline.com/'],['tv','এনটিভি','https://www.ntvbd.com/'],['tv','চ্যানেল আই','https://www.channelionline.com/'],['tv','ইনডিপেনডেন্ট','https://www.independent24.com/'],['tv','ডিবিসি নিউজ','https://dbcnews.tv/'],['tv','এটিএন নিউজ','https://www.atnnewstv.com/'],['tv','নিউজ২৪','https://www.news24bd.tv/'],['tv','বাংলাভিশন','https://www.banglavision.tv/'],['tv','এখন টিভি','https://www.ekhon.tv/'],
+ ['on','বিডিনিউজ২৪','https://bangla.bdnews24.com/'],['on','ঢাকা পোস্ট','https://www.dhakapost.com/'],['on','জাগো নিউজ','https://www.jagonews24.com/'],['on','বাংলা ট্রিবিউন','https://www.banglatribune.com/'],['on','বাংলানিউজ২৪','https://www.banglanews24.com/'],['on','রাইজিংবিডি','https://www.risingbd.com/'],['on','বিবিসি বাংলা','https://www.bbc.com/bengali'],['on','গুগল নিউজ','https://news.google.com/?hl=bn&gl=BD&ceid=BD:bn']
+];
+const NW_COL=['#E5391B','#1F6FEB','#0F8A5F','#B4541A','#7A3FD0','#C2185B','#00838F','#5D4037'];
+const NW=Object.assign({ad:true,autoAI:true,src:'all',custom:[],basket:[],liveTF:true,refresh:10},(()=>{try{return JSON.parse(localStorage.getItem('tfx_news')||'{}');}catch(e){return{};}})());
+NW.items=[];NW.updated=null;NW.shown=40;NW.cur=null;NW.seen=new Set();NW.loading=false;
+function nwSave(){try{localStorage.setItem('tfx_news',JSON.stringify({ad:NW.ad,autoAI:NW.autoAI,src:NW.src,custom:NW.custom,basket:NW.basket,liveTF:NW.liveTF,refresh:NW.refresh}));}catch(e){}}
+const NATIVE=!!(window.Android&&window.Android.httpGet);
+const _hcb={};window.tfHttpCb=(id,ok,d)=>{const f=_hcb[id];if(f){delete _hcb[id];f(ok,d);}};
+function nget(url,b64){return new Promise((res,rej)=>{const id='h'+Date.now().toString(36)+Math.random().toString(36).slice(2);const t=setTimeout(()=>{delete _hcb[id];rej(new Error('সময় শেষ'));},45000);_hcb[id]=(ok,d)=>{clearTimeout(t);ok?res(d):rej(new Error(String(d||'http').slice(0,80)));};try{Android.httpGet(id,url,!!b64);}catch(e){clearTimeout(t);rej(e);}});}
+async function nwText(url){if(NATIVE)return nget(url,false);const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);return r.text();}
+const nwFixImg=u=>String(u||'').replace('//images.prothomalo.com/','//media.prothomalo.com/');
+const nwProx=(u,w)=>'https://images.weserv.nl/?url='+encodeURIComponent(String(u).replace(/^https?:\/\//,''))+'&w='+w+'&we&output=jpg&q=82';
+const nwHost=u=>{try{return new URL(u).hostname.replace(/^www\d?\./,'');}catch(e){return'';}};
+const nwKey=u=>{try{const x=new URL(u);return(x.hostname.replace(/^www\d?\./,'')+x.pathname.replace(/\/+$/,'')).toLowerCase();}catch(e){return String(u||'');}};
+function nwAgo(d){if(!d)return'';const m=Math.round((Date.now()-d)/60000);if(m<1)return'এইমাত্র';if(m<60)return toBn(m)+' মিনিট আগে';const h=Math.round(m/60);if(h<24)return toBn(h)+' ঘণ্টা আগে';return toBn(Math.round(h/24))+' দিন আগে';}
+const ICO=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
+
+/* ---------- feed ---------- */
+async function nwLoad(force){
+  if(NW.loading)return;NW.loading=true;$('#nwStat').textContent='খবর আনা হচ্ছে…';$('#nwRefresh').classList.add('spin');
+  try{
+    let j;const u=NW_FEED+'?t='+Math.floor(Date.now()/60000);
+    try{const r=await fetch(u,{cache:'no-store'});j=await r.json();}catch(e){if(!NATIVE)throw e;j=JSON.parse(await nget(u));}
+    const out=[],seen=new Set();
+    Object.entries(j.sources||{}).forEach(([id,s])=>(s.items||[]).forEach(it=>{if(!it||!it.title||!it.link)return;const k=nwKey(it.link);if(seen.has(k))return;seen.add(k);
+      const d=it.date?new Date(it.date):null;out.push({title:String(it.title).replace(/\s+/g,' ').trim(),link:it.link,img:nwFixImg(it.img),desc:String(it.desc||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(),date:d&&!isNaN(d)?d.getTime():0,src:id,srcName:id==='google'&&it.gsrc?it.gsrc:(NW_SRC[id]||id)});}));
+    out.sort((a,b)=>(b.date||0)-(a.date||0));
+    const firstLoad=!NW.items.length;const old=new Set(NW.items.map(x=>nwKey(x.link)));
+    out.forEach(x=>{x.fresh=!firstLoad&&!old.has(nwKey(x.link));});
+    NW.items=out;NW.updated=j.updated?new Date(j.updated):new Date();NW.loadedAt=Date.now();
+    nwChips();nwRender();
+  }catch(e){$('#nwStat').textContent='খবর আনা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন';}
+  NW.loading=false;$('#nwRefresh').classList.remove('spin');
+}
+function nwStatTxt(){if(!NW.updated)return;const n=NW.items.filter(x=>x.fresh).length;$('#nwStat').innerHTML=`${toBn(NW.items.length)}টি খবর · আপডেট ${nwAgo(NW.updated.getTime())}${n?` · <b style="color:var(--ac)">নতুন ${toBn(n)}</b>`:''}<small>প্রতি ${toBn(NW.refresh)} মিনিটে নিজে আপডেট হয়</small>`;}
+function nwChips(){const cnt={};NW.items.forEach(x=>cnt[x.src]=(cnt[x.src]||0)+1);const ids=Object.keys(NW_SRC).filter(id=>cnt[id]);
+  $('#nwChips').innerHTML=[['all','সব']].concat(ids.map(id=>[id,NW_SRC[id]])).map(([id,n])=>`<button data-s="${id}" class="${NW.src===id?'on':''}">${esc(n)}</button>`).join('');}
+function nwFiltered(){const q=($('#nwQ').value||'').trim().toLowerCase();return NW.items.filter(x=>(NW.src==='all'||x.src===NW.src)&&(!q||x.title.toLowerCase().includes(q)||x.desc.toLowerCase().includes(q)));}
+function nwInBasket(link){const k=nwKey(link);return NW.basket.some(b=>nwKey(b.link)===k);}
+function nwRender(){
+  nwStatTxt();const L=nwFiltered();const box=$('#nwList');
+  if(!L.length){box.innerHTML=`<p class="hint" style="text-align:center;margin:40px 0">${NW.items.length?'এই খোঁজে কোনো খবর নেই':'খবর লোড হচ্ছে…'}</p>`;$('#nwMore').classList.add('hidden');return;}
+  box.innerHTML=L.slice(0,NW.shown).map((x,i)=>`<div class="nwi" data-i="${i}">${x.img?`<img loading="lazy" src="${esc(nwProx(x.img,240))}" data-raw="${esc(x.img)}" onerror="if(this.dataset.raw&&this.src!==this.dataset.raw){this.src=this.dataset.raw;this.dataset.raw=''}else{this.replaceWith(Object.assign(document.createElement('span'),{className:'ph'}))}">`:'<span class="ph"></span>'}<div class="t"><b>${esc(x.title)}</b><small>${x.fresh?'<i class="new">নতুন</i>':''}${esc(x.srcName)} · ${nwAgo(x.date)}</small></div><button class="bk${nwInBasket(x.link)?' on':''}" aria-label="ঝুড়িতে রাখুন">${ICO(nwInBasket(x.link)?'check':'plus')}</button></div>`).join('');
+  $('#nwMore').classList.toggle('hidden',L.length<=NW.shown);NW.view=L;nwBasketBar();
+}
+function nwBasketBar(){const n=NW.basket.length;$('#nwBasket').classList.toggle('hidden',!n);$('#nwBasketN').textContent=toBn(n)+'টি খবর ঝুড়িতে';}
+function nwToggleBasket(it){const k=nwKey(it.link);const i=NW.basket.findIndex(b=>nwKey(b.link)===k);if(i>=0)NW.basket.splice(i,1);else{if(NW.basket.length>=8){alert('একটা বুলেটিনে সর্বোচ্চ ৮টি খবর রাখা যায়।');return;}NW.basket.push({title:it.title,link:it.link,img:it.img||'',desc:(it.desc||'').slice(0,400),srcName:it.srcName||'',text:it.text||''});}nwSave();nwRender();nwRenderBasketList();}
+
+/* ---------- sheet ---------- */
+function nwOpenSheet(it){NW.cur=it;const s=$('#nwSheet');
+  $('#nwsImg').innerHTML=it.img?`<img src="${esc(nwProx(it.img,900))}" onerror="this.src='${esc(it.img)}';this.onerror=()=>this.remove()">`:'';
+  $('#nwsTitle').textContent=it.title||'(শিরোনাম পাওয়া যায়নি)';$('#nwsMeta').textContent=[it.srcName||nwHost(it.link),it.date?nwAgo(it.date):''].filter(Boolean).join(' · ');
+  $('#nwsDesc').textContent=shortText(it.text||it.desc||'',260);$('#nwsBasket').innerHTML=nwInBasket(it.link)?ICO('check')+' ঝুড়িতে আছে':ICO('layers')+' বুলেটিনের ঝুড়িতে রাখুন';
+  s.classList.remove('hidden');}
+function nwCloseSheet(){$('#nwSheet').classList.add('hidden');}
+
+/* ---------- article + photo ---------- */
+function nwParse(html,url){
+  const d=new DOMParser().parseFromString(html,'text/html');const m=n=>{const e=d.querySelector(`meta[property="${n}"],meta[name="${n}"]`);return e?(e.getAttribute('content')||'').trim():'';};
+  let body='';d.querySelectorAll('script[type="application/ld+json"]').forEach(s=>{try{const walk=o=>{if(!o)return;if(Array.isArray(o))return o.forEach(walk);if(typeof o==='object'){if(typeof o.articleBody==='string'&&o.articleBody.length>body.length)body=o.articleBody;if(o['@graph'])walk(o['@graph']);}};walk(JSON.parse(s.textContent));}catch(e){}});
+  body=body.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ');
+  if(body.length<200){d.querySelectorAll('script,style,nav,header,footer,aside,figure,form,iframe').forEach(e=>e.remove());const root=d.querySelector('[itemprop="articleBody"]')||d.querySelector('article')||d.querySelector('main')||d.body;const ps=[];if(root)root.querySelectorAll('p').forEach(p=>{const t=(p.textContent||'').replace(/\s+/g,' ').trim();if(t.length>40&&!/আরও পড়ুন|আরো পড়ুন|বিজ্ঞাপন|Advertisement/.test(t)&&!ps.includes(t))ps.push(t);});if(ps.join(' ').length>body.length)body=ps.join('\n');}
+  let img=m('og:image')||m('twitter:image');try{if(img)img=new URL(img,url).href;}catch(e){}
+  return{title:m('og:title')||(d.querySelector('h1')||{}).textContent||d.title||'',img,desc:m('og:description')||m('description'),text:body.replace(/[ \t]+/g,' ').trim()};}
+async function nwArticle(it){
+  let a={title:'',img:'',desc:'',text:''};
+  if(!(it.text&&it.text.length>250)){
+    try{a=nwParse(await nwText(it.link),it.link);}catch(e){}
+    if(a.text.length<250){try{const t=await nwText('https://r.jina.ai/'+it.link);const body=t.split(/Markdown Content:\s*/)[1]||t;const clean=body.split('\n').map(l=>l.replace(/!\[[^\]]*\]\([^)]*\)/g,'').replace(/\[([^\]]*)\]\([^)]*\)/g,'$1').replace(/^[#>*\-\s]+/,'').trim()).filter(l=>l.length>40&&/[ঀ-৿a-z]/i.test(l)).join('\n');if(clean.length>a.text.length)a.text=clean;}catch(e){}}
+  }
+  const title=(it.title||a.title||'').replace(/\s+/g,' ').trim();
+  return{title,link:it.link,img:nwFixImg(it.img||a.img),text:(it.text&&it.text.length>250?it.text:a.text||it.desc||a.desc||'').slice(0,7000),srcName:it.srcName||nwSrcOf(it.link)};
+}
+function nwSrcOf(url){const h=nwHost(url);const p=NW_PAPERS.concat(NW.custom.map(c=>['my',c.n,c.u])).find(p=>{const ph=nwHost(p[2]);return ph&&(h===ph||h.endsWith('.'+ph)||ph.endsWith('.'+h));});return p?p[1]:h;}
+async function nwImgBlob(url){
+  if(NATIVE){const r=await nget(url,true);const i=r.indexOf('|');const ct=(r.slice(0,i)||'image/jpeg').split(';')[0];const bin=atob(r.slice(i+1));const u8=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)u8[k]=bin.charCodeAt(k);if(!/^image\//.test(ct)&&u8.length<2000)throw new Error('ছবি নয়');return new Blob([u8],{type:/^image\//.test(ct)?ct:'image/jpeg'});}
+  const r=await fetch(nwProx(url,1600));if(!r.ok)throw new Error('img');return r.blob();}
+function nwBusy(t){const o=$('#nwBusy');if(t==null){o.classList.add('hidden');return;}$('#nwBusyTxt').textContent=t;o.classList.remove('hidden');}
+function nwToScript(arts){return arts.map(a=>{const s=(a.text||a.title).replace(/\s+/g,' ').split(/(?<=[।!?])\s+/).map(x=>x.trim()).filter(x=>x.length>6).slice(0,12);const sc=[];for(let i=0;i<s.length;i+=2)sc.push(s.slice(i,i+2).join(' '));return'# '+a.title+'\n\n'+(sc.join('\n\n')||a.title);}).join('\n\n');}
+async function nwUse(list){
+  nwCloseSheet();const arts=[];let photos=0;
+  for(let i=0;i<list.length;i++){
+    nwBusy(list.length>1?`খবর ${toBn(i+1)}/${toBn(list.length)} আনা হচ্ছে…`:'পুরো খবর আনা হচ্ছে…');
+    const a=await nwArticle(list[i]);if(!a.title&&!a.text)continue;arts.push(a);
+    if(a.img){nwBusy('ছবি লাইব্রেরিতে যোগ হচ্ছে…');try{const name=shortText(a.title,70).replace(/[\\/:*?"<>|]/g,' ');if(!GALLERY.some(g=>g.name===name)){const b=await nwImgBlob(a.img);const f=new File([b],name+(b.type==='image/png'?'.png':b.type==='image/webp'?'.webp':'.jpg'),{type:b.type});await addGalleryFiles([f],{query:a.title,credit:a.srcName});}photos++;}catch(e){}}
+  }
+  nwBusy(null);if(!arts.length){alert('খবরটা আনা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।');return false;}
+  const raw=arts.length===1?`${arts[0].title}\n\n${arts[0].text}\n\n(সূত্র: ${arts[0].srcName})`:`নিচের ${toBn(arts.length)}টি খবর দিয়ে একটা নিউজ বুলেটিন বানান — প্রতিটি খবর আলাদা অধ্যায় (#) হবে।\n\n`+arts.map((a,i)=>`খবর ${toBn(i+1)}: ${a.title}\n${a.text.slice(0,1800)}\n(সূত্র: ${a.srcName})`).join('\n\n---\n\n');
+  $('#rawText').value=raw;$('#rawText').dispatchEvent(new Event('input'));
+  if(arts.length>1){const l=$('#len');if(+l.value<180)setSel('len','180');}
+  const key=settings.provider==='gemini'?$('#gkey').value:$('#ckey').value;
+  go('create');
+  if(key){$('#createMode [data-m=ai]').click();setAI(`✔ খবর বসানো হয়েছে${photos?` · ${toBn(photos)}টি ছবি লাইব্রেরিতে`:''}`,true);if(NW.autoAI)setTimeout(()=>$('#aiAll').click(),400);}
+  else{$('#script').value=nwToScript(arts);$('#script').dispatchEvent(new Event('input'));save();$('#createMode [data-m=manual]').click();
+    setTimeout(()=>alert(`✔ খবর বসানো হয়েছে${photos?`, ${toBn(photos)}টি ছবি লাইব্রেরিতে যোগ হয়েছে`:''}।\n\nAPI কী না থাকায় খবর থেকে সরাসরি স্ক্রিপ্ট বানানো হয়েছে — দেখে নিয়ে নিচের বাটন চাপুন। (সেটিংসে API কী দিলে AI নিজে সুন্দর করে সাজাবে।)`),200);}
+  return true;
+}
+
+/* ---------- paper portal ---------- */
+function nwOpenPaper(url){if(window.Android&&Android.openBrowser)Android.openBrowser(url,!!NW.ad);else window.open(url,'_blank');}
+window.tfPickedNews=function(p){try{if(typeof p==='string')p=JSON.parse(p);}catch(e){p=null;}if(!p||!p.url){alert('এই পাতা থেকে খবর পড়া যায়নি।');return;}
+  go('news');nwOpenSheet({title:p.title||'',link:p.url,img:p.img||'',desc:p.desc||'',text:p.text||'',srcName:nwSrcOf(p.url),date:0});};
+function nwRenderPapers(){
+  const tile=(n,u,i,del)=>`<a href="#" class="pp" data-u="${esc(u)}"><span class="pl" style="background:${NW_COL[i%NW_COL.length]}">${esc([...n][0]||'•')}</span><span class="pn">${esc(n)}</span>${del!=null?`<button class="pdel" data-d="${del}" aria-label="মুছুন">×</button>`:''}</a>`;
+  [['p','#ppP'],['tv','#ppTv'],['on','#ppOn']].forEach(([g,sel],gi)=>{$(sel).innerHTML=NW_PAPERS.filter(p=>p[0]===g).map((p,i)=>tile(p[1],p[2],i+gi*3)).join('');});
+  $('#ppMy').innerHTML=NW.custom.map((c,i)=>tile(c.n,c.u,i+5,i)).join('')||'<span class="hint" style="grid-column:1/-1">নিচে নাম আর লিংক দিয়ে নিজের পত্রিকা যোগ করুন</span>';
+}
+function nwRenderBasketList(){const b=$('#nwBList');if(!b)return;b.innerHTML=NW.basket.map((x,i)=>`<div class="row"><span class="lab"><b style="font-size:15px">${esc(shortText(x.title,80))}</b><small>${esc(x.srcName||nwHost(x.link))}</small></span><button class="ib" data-bx="${i}" aria-label="সরান">${ICO('x')}</button></div>`).join('')||'<div class="row"><span class="lab"><small>ঝুড়ি খালি</small></span></div>';}
+
+/* ---------- wiring ---------- */
+$('#nwTabs').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{$('#nwTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('#nwLive').classList.toggle('hidden',b.dataset.t!=='live');$('#nwPapers').classList.toggle('hidden',b.dataset.t!=='papers');}));
+$('#nwRefresh').onclick=()=>nwLoad(true);
+$('#nwQ').addEventListener('input',()=>{NW.shown=40;nwRender();});
+$('#nwChips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;NW.src=b.dataset.s;nwSave();NW.shown=40;nwChips();nwRender();b.scrollIntoView&&b.scrollIntoView({inline:'center',block:'nearest'});});
+$('#nwMore').onclick=()=>{NW.shown+=40;nwRender();};
+$('#nwList').addEventListener('click',e=>{const row=e.target.closest('.nwi');if(!row)return;const it=NW.view[+row.dataset.i];if(e.target.closest('.bk')){nwToggleBasket(it);return;}nwOpenSheet(it);});
+$('#nwsClose').onclick=nwCloseSheet;$('#nwSheet').addEventListener('click',e=>{if(e.target.id==='nwSheet')nwCloseSheet();});
+$('#nwsUse').onclick=()=>NW.cur&&nwUse([NW.cur]);
+$('#nwsBasket').onclick=()=>{if(!NW.cur)return;nwToggleBasket(NW.cur);nwOpenSheet(NW.cur);};
+$('#nwsOpen').onclick=()=>{if(NW.cur){nwCloseSheet();nwOpenPaper(NW.cur.link);}};
+$('#nwBUse').onclick=()=>{if(NW.basket.length)nwUse(NW.basket.slice()).then(ok=>{if(ok){NW.basket=[];nwSave();nwRender();nwRenderBasketList();}});};
+$('#nwBClear').onclick=()=>{if(confirm('ঝুড়ি খালি করবেন?')){NW.basket=[];nwSave();nwRender();nwRenderBasketList();}};
+$('#nwBShow').onclick=()=>{$('#nwBSheet').classList.remove('hidden');nwRenderBasketList();};
+$('#nwBSheet').addEventListener('click',e=>{if(e.target.id==='nwBSheet'||e.target.closest('#nwBDone'))$('#nwBSheet').classList.add('hidden');const x=e.target.closest('[data-bx]');if(x){NW.basket.splice(+x.dataset.bx,1);nwSave();nwRender();nwRenderBasketList();if(!NW.basket.length)$('#nwBSheet').classList.add('hidden');}});
+$('#nwPapers').addEventListener('click',e=>{const d=e.target.closest('.pdel');if(d){e.preventDefault();e.stopPropagation();if(confirm('এই পত্রিকা তালিকা থেকে সরাবেন?')){NW.custom.splice(+d.dataset.d,1);nwSave();nwRenderPapers();}return;}const p=e.target.closest('.pp');if(p){e.preventDefault();nwOpenPaper(p.dataset.u);}});
+$('#nwAd').checked=!!NW.ad;$('#nwAd').addEventListener('change',e=>{NW.ad=e.target.checked;nwSave();});
+$('#nwAuto').checked=!!NW.autoAI;$('#nwAuto').addEventListener('change',e=>{NW.autoAI=e.target.checked;nwSave();});
+$('#ppAdd').onclick=()=>{const n=$('#ppName').value.trim();let u=$('#ppUrl').value.trim();if(!u){alert('পত্রিকার লিংক দিন');return;}if(!/^https?:\/\//.test(u))u='https://'+u;NW.custom.push({n:n||nwHost(u),u});nwSave();$('#ppName').value='';$('#ppUrl').value='';nwRenderPapers();};
+$('#ppLinkGo').onclick=async()=>{let u=$('#ppLink').value.trim();if(!u)return;if(!/^https?:\/\//.test(u))u='https://'+u;nwBusy('খবর পড়া হচ্ছে…');const a=await nwArticle({link:u});nwBusy(null);if(!a.title&&!a.text){alert('এই লিংক থেকে খবর পড়া যায়নি। পত্রিকা খুলে "এই খবর নিন" বাটন ব্যবহার করুন।');return;}nwOpenSheet(a);};
+if($('#liveTF')){$('#liveTF').checked=!!NW.liveTF;$('#liveTF').addEventListener('change',e=>{NW.liveTF=e.target.checked;nwSave();});}
+// live mode: use the same 10-minute papers feed for live headlines
+const _fetchRSSorig=fetchRSS;
+fetchRSS=async function(){let tf=[];if(NW.liveTF){try{if(!NW.items.length||Date.now()-(NW.loadedAt||0)>5*60000)await nwLoad();tf=(NW.src==='all'?NW.items:NW.items.filter(x=>x.src===NW.src)).slice(0,30).map(x=>cleanTitle(x.title)).filter(Boolean);}catch(e){}}
+  let rss=[];if((settings.liveRss||'').trim()){try{rss=await _fetchRSSorig();}catch(e){}}if(tf.length)liveMsg='';return[...new Set([...tf,...rss])].slice(0,40);};
+// auto refresh every N minutes (feed itself is refreshed on GitHub every 10 minutes)
+setInterval(()=>{if(!LIVE&&!document.hidden)nwLoad();},Math.max(2,+NW.refresh||10)*60000);
+setInterval(()=>{if(document.querySelector('#s-news.on'))nwStatTxt();},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!LIVE&&NW.loadedAt&&Date.now()-NW.loadedAt>NW.refresh*60000)nwLoad();});
+nwRenderPapers();nwBasketBar();
+if(!LIVE)setTimeout(()=>nwLoad(),800);
 
 </script>
 </body>
