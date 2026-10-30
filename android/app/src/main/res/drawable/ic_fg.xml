@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- T -->
+    <path android:fillColor="#FFFFFF" android:pathData="M31,38h24v8h-24z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M39,38h8v28h-8z" />
+    <!-- F -->
+    <path android:fillColor="#FFFFFF" android:pathData="M59,38h8v28h-8z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M59,38h20v8h-20z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M59,50h16v7h-16z" />
+    <!-- ticker bar -->
+    <path android:fillColor="#FFFFFF" android:pathData="M38,71h32a2,2 0,0 1,0 4h-32a2,2 0,0 1,0 -4z" />
+    <!-- live dot -->
+    <path android:fillColor="#FFFFFF" android:pathData="M75,30m-3.5,0a3.5,3.5 0,1 1,7 0a3.5,3.5 0,1 1,-7 0" />
+</vector>

@@ -1,0 +1,51 @@
+plugins {
+    id 'com.android.application'
+}
+
+def runNo = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
+android {
+    namespace 'com.tfnews.studio'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.tfnews.studio"
+        minSdk 29
+        targetSdk 34
+        versionCode runNo
+        versionName "1.0." + runNo
+    }
+
+    signingConfigs {
+        test {
+            storeFile file('tf-test.keystore')
+            storePassword 'tfnews123'
+            keyAlias 'tfnews'
+            keyPassword 'tfnews123'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.test
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.test
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
