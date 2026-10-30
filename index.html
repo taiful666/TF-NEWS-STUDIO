@@ -1710,7 +1710,7 @@ STUDIO.bgphoto=function(sc,t){const m=scImg(sc);if(!m)return STUDIO.close(sc,t);
   rect(0,wallB,W,H-wallB,T_.floor);ctx.save();ctx.globalAlpha=.1;for(let q=0;q<6;q++)line(0,wallB+18+q*q*8,W,wallB+18+q*q*8,'#fff',2);ctx.restore();
   const mo=mouthLevel(t);anchorFig(660,930,1.55,{mouth:mo,t,seed:6,look:.12});newsDesk(660,930,1250,1.35);anchorHands(660,930,1.55,t);
   studioLower(sc,t);};
-{const _as=assignShots;assignShots=function(arr){_as(arr);arr=arr||scenes;let n=0;arr.forEach(sc=>{if(sc.isChapter||!sc.shot||sc.shot==='field'||sc.shot==='wide'||sc.shot==='live')return;const o=overrides[sc.raw]||{};if(o.shot&&o.shot!=='auto')return;if(scImg(sc)&&(n++%2===0)){sc.shot='bgphoto';sc.cutAt=null;}});};}
+{const _as=assignShots;assignShots=function(arr){_as(arr);arr=arr||scenes;let n=0;arr.forEach(sc=>{if(sc.isChapter||!sc.shot||sc.shot==='field'||sc.shot==='wide'||sc.shot==='live')return;const o=overrides[sc.raw]||{};if(o.shot&&o.shot!=='auto')return;if(scImg(sc)&&(sc.shot==='close'||(n++%3!==2))){sc.shot='bgphoto';sc.cutAt=null;}});};}
 
 /* ---------- built-in news music (generated, no file needed) ---------- */
 const BGM_LABEL={pulse:'নিউজ পালস (বিল্ট-ইন)',soft:'নরম নিউজ (বিল্ট-ইন)',own:'নিজের মিউজিক ফাইল',off:'মিউজিক বন্ধ'};
@@ -1899,13 +1899,23 @@ const FXV=[
  (sc,t,k,img,g,fl)=>{const T_=THEMES[settings.studioTheme]||THEMES.blue;rect(0,0,W,H,T_.w1);const p=back(prog(t,0,.7));ctx.save();ctx.translate(W/2,480);ctx.scale(.85+.15*p,.85+.15*p);ctx.translate(-W/2,-480);rr(250,80,1420,720,24,'#05070D');fxImg(img,280,110,1360,660,{z:1.04+.05*k,g,flip:fl});ctx.save();ctx.globalAlpha=.12;for(let y=110;y<770;y+=5)rect(280,y,1360,2,'#000');ctx.restore();
    const gl=t<.6?(.6-t)*30:0;if(gl>0){ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=.35;fxImg(img,280+gl,110,1360,660,{filter:'grayscale(1)',noTint:true});ctx.restore();}ctx.restore();
    rect(250,822,220,48,C.red);text('ফাইল ছবি',360,856,26,'#fff','center',700);fxCaption(sc,510,872,1150,eo(prog(t,.6,.6)));}
+
+ // 8 kinetic text over the photo (word by word, one word marked yellow)
+ ,(sc,t,k,img,g,fl)=>{fxImg(img,0,0,W,H,{z:1.12+.08*k,px:(fl?1:-1)*30*k,g,flip:fl});rect(0,0,W,H,'rgba(6,8,16,.62)');
+   const words=shortText(sc.text.replace(/\*/g,''),150).split(' ');const key=(sc.hlx&&sc.hlx.s||'').split(' ')[0];const fs=72,lh=fs*1.35,maxW=1500;let x=210,y=330,li=0;
+   rect(150,250,12,eo(prog(t,.1,.5))*Math.min(4,Math.ceil(words.length/7))*lh,C.red);
+   words.forEach((w,wi)=>{const ww=tw(w+' ',fs,700);if(x+ww>210+maxW){x=210;y+=lh;li++;}if(li>3)return;const p=eo(prog(t,.15+wi*.11,.35));if(p>0){ctx.save();ctx.globalAlpha=p;const mk=key&&w.includes(key);if(mk){ctx.fillStyle='#FFE14D';ctx.fillRect(x-6,y-fs*.82,tw(w,fs,700)*eo(prog(t,.3+wi*.11,.4))+12,fs*1.05);}text(w,x,y+(1-p)*24,fs,mk?C.ink:'#fff','left',700);ctx.restore();}x+=ww;});}
+ // 9 dark split: photo left, animated lines right
+ ,(sc,t,k,img,g,fl)=>{rect(0,0,W,H,'#0E1220');const p=eo(prog(t,0,.8));ctx.save();ctx.beginPath();ctx.rect(0,0,960*p,H);ctx.clip();fxImg(img,0,0,960,H,{z:1.08+.08*k,g,flip:fl});ctx.restore();rect(960*p-8,0,8,H,C.red);
+   const hd=shortText(fxHead(sc),60);para(hd,1040,250,760,64,'#fff',3,1.25,700,'left',prog(t,.4,.7));const lines=wrapLines(shortText(sc.text.replace(/\*/g,''),180),760,38,600).slice(0,5);
+   lines.forEach((l,i)=>{const q=eo(prog(t,1+i*.3,.5));if(q<=0)return;ctx.save();ctx.globalAlpha=q;text(l,1040+(1-q)*40,520+i*56,38,'#C9CFDD','left',600);ctx.restore();});}
 ];
 def('photofx','ছবি — নানা স্টাইল (রং-অ্যানিমেশন বদলায়)',true,(sc,t)=>{const img=scImg(sc);if(!img){TPL.iconhero.draw(sc,t,sc.dur);return;}const k=clamp(t/sc.dur);const v=(sc.fxv==null?sc.seed:sc.fxv)%FXV.length;FXV[v](sc,t,k,img,(sc.fxg==null?sc.seed:sc.fxg),!!sc.fxf);},'ছবি');
-const PFX_SEQ=['photofx','photofx','photocard','photofx','photosplit','photofx','photofx','photo'];
+const PFX_SEQ=['photofx','photofx','photocard','photofx','photofx','photosplit','photofx','photofx','photo','photofx'];
 function photoPick(sc,mm){return sc.pfx||'photofx';}
 
 /* ---------- highlighted key phrases ---------- */
-const HL_SKIP=['headline','breaking','word','quote','question','number','percent','compare','chapter','intro','outro','photofx','calendar'];
+const HL_SKIP=['headline','breaking','word','quote','question','number','percent','compare','chapter','intro','outro','calendar'];
 function pickHL(sc){if(sc.isChapter||sc.special)return null;const txt=sc.text.replace(/\*/g,'').replace(/\s+/g,' ').trim();if(txt.length<38)return null;
   const q=txt.match(/[“"‘']([^”"’']{6,70})[”"’']/);if(q)return{s:q[1],q:1};
   const n=txt.match(/[০-৯0-9][০-৯0-9,.]*\s*(?:%|শতাংশ|জন|টাকা|কোটি|লাখ|হাজার|কিলোমিটার|কিমি|মিটার|ঘণ্টা|দিন|বছর|টন|মাস)(?:\s+[^\s,।]+){0,3}/);if(n&&n[0].length>=5)return{s:n[0]};
@@ -1913,7 +1923,7 @@ function pickHL(sc){if(sc.isChapter||sc.special)return null;const txt=sc.text.re
   if(sc.hl&&sc.hl.length>=4)return{s:sc.hl};return{s:txt.split(' ').slice(0,6).join(' ')};}
 function hlTiming(sc){const t0=Math.max(1.1,sc.dur*.28),len=Math.min(4,sc.dur-t0-.4);return len>=1.8?[t0,len]:null;}
 function hlPlace(shot){if(shot==='live')return null;if(shot==='wall')return[150,590,'l'];if(shot==='ots')return[1080,610,'r'];if(shot==='wide')return[1200,560,'r'];return[1180,330,'r'];}
-function drawHL(sc,t,shot){const h=sc.hlx;if(!h)return;const tm=hlTiming(sc);if(!tm)return;const lt=t-tm[0];if(lt<0||lt>tm[1])return;const pl=hlPlace(shot);if(!pl)return;
+function drawHL(sc,t,shot){const h=sc.hlx;if(!h)return;if(shot==='field'&&!scImg(sc))return;if(shot==='field'&&scImg(sc)&&sc.pfx==='photofx'&&[8,9].includes(sc.fxv%FXV.length))return;const tm=hlTiming(sc);if(!tm)return;const lt=t-tm[0];if(lt<0||lt>tm[1])return;const pl=hlPlace(shot);if(!pl)return;
   const pin=eo(prog(lt,0,.45)),pout=1-eo(prog(lt,tm[1]-.4,.4));const a=Math.min(pin,pout);if(a<=0)return;
   const style=h.st,fs=46,maxW=600;const lines=wrapLines(h.s,maxW,fs,700).slice(0,3);const lw=Math.max(...lines.map(l=>tw(l,fs,700)));const bw=lw+70,bh=lines.length*fs*1.38+(style===2?40:78);
   let [x,y,side]=pl;if(side==='r')x=Math.min(x,W-bw-70);const off=(1-pin)*(side==='r'?120:-120);
@@ -1930,15 +1940,20 @@ if(settings.highlights==null)settings.highlights=true;
 /* ---------- layout extras: fill to voice length, photo-style rotation, anti-repeat, highlights ---------- */
 {const _lay=layout;layout=function(){_lay();
   if(hasAudio&&!LIVE&&isFinite(audioEl.duration)&&audioEl.duration>total+.3&&scenes.length){let k=scenes.length-1;while(k>0&&scenes[k].special)k--;scenes[k].dur+=audioEl.duration-total;let s=0;scenes.forEach(sc=>{sc.start=s;s+=sc.dur;});total=s;}
-  // repeated visual nearby + a news photo in the library => show the photo instead (in a new style)
-  if(GALLERY.length&&settings.autoPhoto!==false){const rec=[];let rot=0,ch=false;scenes.forEach(sc=>{if(sc.isChapter){return;}const o=overrides[sc.raw]||{};if(!scImg(sc)&&!(o.type||PL(sc).t)&&rec.slice(-3).includes(sc.type)){const mm=matchMedia(sc,{});sc.autoPhoto=mm>=0?mm:(rot++%GALLERY.length);ch=true;}rec.push(sc.type);});if(ch)assignShots(scenes);}
+  // PHOTO FOCUS: the news photo carries the video. Every scene shows it (in a new style each time),
+  // except an occasional data visual (map / chart / number) so the story stays clear.
+  if(GALLERY.length&&settings.autoPhoto!==false){const DATA=['mapbd','mapworld','bars','number','compare','percent','timeline','price','election','people'];let rot=0,lastData=-9,ch=false,ci=0;
+    scenes.forEach((sc,i)=>{if(sc.isChapter)return;ci++;const o=overrides[sc.raw]||{};if(scImg(sc)||o.img)return;
+      if(DATA.includes(sc.type)&&ci-lastData>=4){lastData=ci;return;}
+      const mm=matchMedia(sc,{});sc.autoPhoto=mm>=0?mm:(rot++%GALLERY.length);ch=true;});
+    if(ch)assignShots(scenes);}
   let m=0,prev='',prev2='',hn=0;const ALT=['iconhero','icons','headline','word','question'];const rs=(scenes.length*7+3);
   scenes.forEach((sc,i)=>{if(sc.isChapter){prev=prev2='';return;}const o=overrides[sc.raw]||{};const userT=(o.type)||PL(sc).t;const mm=scImg(sc);
-    if(mm){sc.pfx=PFX_SEQ[(m+rs)%PFX_SEQ.length];if(mm.tagName==='VIDEO'&&sc.pfx!=='photofx')sc.pfx='photo';sc.fxv=(m*3+rs)%FXV.length;sc.fxg=(m*5+rs+1)%FX_GRADE.length;sc.fxf=((m+rs)%3)===1;m++;
+    if(mm){sc.pfx=PFX_SEQ[(m+rs)%PFX_SEQ.length];if(mm.tagName==='VIDEO'&&sc.pfx!=='photofx')sc.pfx='photo';sc.fxv=(m*3+rs)%FXV.length;if(i>0&&scenes[i-1].fxv===sc.fxv)sc.fxv=(sc.fxv+1)%FXV.length;sc.fxg=(m*5+rs+1)%FX_GRADE.length;sc.fxf=((m+rs)%3)===1;m++;
       if(!userT&&/^photo/.test(sc.type))sc.type=sc.pfx;}
     else if(!userT&&sc.type===prev&&prev===prev2&&ALT.includes(sc.type)){sc.type=ALT.filter(a=>a!==sc.type)[(i+rs)%(ALT.length-1)];}
     prev2=prev;prev=sc.type;
-    sc.hlx=null;if(!HL_SKIP.includes(sc.type)&&sc.shot!=='live'){if(hn++%2===0){const h=pickHL(sc);if(h){h.st=(hn+rs)%3;sc.hlx=h;}}}
+    sc.hlx=null;if(!HL_SKIP.includes(sc.type)&&sc.shot!=='live'){if(hn++%3!==2){const h=pickHL(sc);if(h){h.st=(hn+rs)%3;sc.hlx=h;}}}
   });};}
 {const _be=buildEvents;buildEvents=function(){_be();scenes.forEach(sc=>{if(!sc.hlx)return;const tm=hlTiming(sc);if(tm)EVENTS.push([sc.start+tm[0]+.05,'soft']);});EVENTS.sort((a,b)=>a[0]-b[0]);};}
 
