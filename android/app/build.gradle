@@ -23,6 +23,14 @@ android {
             keyAlias 'tfnews'
             keyPassword 'tfnews123'
         }
+        // permanent private key: comes from GitHub Secrets during the build (never stored in the code)
+        permanent {
+            storeFile file('release.jks')
+            storePassword System.getenv("ANDROID_KEYSTORE_PASS") ?: ""
+            keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "tfnewsstudio"
+            keyPassword System.getenv("ANDROID_KEYSTORE_PASS") ?: ""
+            storeType "pkcs12"
+        }
     }
 
     buildTypes {
@@ -31,7 +39,7 @@ android {
         }
         release {
             minifyEnabled false
-            signingConfig signingConfigs.test
+            signingConfig file('release.jks').exists() ? signingConfigs.permanent : signingConfigs.test
         }
     }
 
@@ -48,4 +56,5 @@ android {
 
 dependencies {
     implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.core:core:1.13.1'
 }

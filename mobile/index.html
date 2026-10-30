@@ -400,7 +400,7 @@ details.help summary{font-weight:600;cursor:pointer}
       <div class="row col"><label for="tickerText">টিকারের লেখা (প্রতি লাইনে একটা)</label><textarea id="tickerText" rows="4" placeholder="খালি রাখলে সাধারণ কিছু লেখা চলবে"></textarea></div>
       <div class="row col"><label for="tickerSpeed">গতি</label><input id="tickerSpeed" type="range" min="60" max="320"></div>
     </div>
-    <p class="hint" style="text-align:center;margin-top:24px">TF News Studio · সংস্করণ 1.3</p>
+    <p class="hint" style="text-align:center;margin-top:24px">TF News Studio · সংস্করণ 1.5</p>
   </div>
   <nav class="nav"></nav>
 </section>
@@ -2160,6 +2160,11 @@ if(!LIVE)go('home');
 // first paint
 setTimeout(()=>{syncSegs();syncProv();syncMirrors();updateHome();},300);
 setInterval(()=>{if(document.querySelector('#s-home.on'))updateHome();},5000);
+// app version + update check (Android app only)
+(function updRow(){if(!(window.Android&&Android.checkUpdate))return;const sc=document.querySelector('#s-settings .scroll');if(!sc)return;let v='';try{v=Android.appVersion();}catch(e){}
+  const h=document.createElement('h2');h.className='sec';h.textContent='অ্যাপ আপডেট';const g=document.createElement('div');g.className='group';
+  g.innerHTML=`<div class="row"><span class="lab"><b>সংস্করণ ${esc(v)}</b><small>নতুন আপডেট এলে নিজে থেকে নোটিফিকেশন আসবে</small></span><button class="btn sec sm" id="updBtn">আপডেট দেখুন</button></div>`;
+  sc.appendChild(h);sc.appendChild(g);$('#updBtn').onclick=()=>{try{Android.checkUpdate();}catch(e){}};})();
 
 /* ============ NEWS: live papers feed + paper portal (from TF FB Reels & Post Card Maker) ============ */
 const NW_FEED='https://raw.githubusercontent.com/taiful666/TFCRFBPOSTMAKERAIMOBILE/live-news/news.json';

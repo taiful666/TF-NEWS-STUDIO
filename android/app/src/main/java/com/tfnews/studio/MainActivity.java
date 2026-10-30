@@ -167,6 +167,28 @@ public class MainActivity extends Activity {
         } else {
             web.loadUrl(HOME);
         }
+
+        // auto-update: background check every 6 hours + a check now
+        if (android.os.Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 14);
+        }
+        Updater.schedule(this);
+        boolean fromNotif = getIntent() != null && getIntent().getBooleanExtra("doUpdate", false);
+        web.postDelayed(() -> Updater.checkInApp(MainActivity.this, false, fromNotif), 2500);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent != null && intent.getBooleanExtra("doUpdate", false)) {
+            Updater.checkInApp(this, false, true);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Updater.resumePending(this);
     }
 
     @Override
@@ -383,6 +405,16 @@ public class MainActivity extends Activity {
                 final String js = "window.tfHttpCb && window.tfHttpCb(" + JSONObject.quote(id) + "," + ok + "," + JSONObject.quote(out) + ")";
                 runOnUiThread(() -> web.evaluateJavascript(js, null));
             }).start();
+        }
+
+        @JavascriptInterface
+        public void checkUpdate() {
+            Updater.checkInApp(MainActivity.this, true, false);
+        }
+
+        @JavascriptInterface
+        public String appVersion() {
+            return Updater.currentName(MainActivity.this);
         }
 
         @JavascriptInterface

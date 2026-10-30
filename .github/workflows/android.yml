@@ -32,7 +32,21 @@ jobs:
           mkdir -p android/app/src/main/assets/www
           cp mobile/index.html android/app/src/main/assets/www/index.html
 
+      - name: Load the permanent signing key (from GitHub Secrets)
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > android/app/release.jks
+            echo "Permanent key loaded"
+          else
+            echo "::warning::ANDROID_KEYSTORE_B64 secret is not set yet - using the temporary test key"
+          fi
+
       - name: Build APK
+        env:
+          ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           set -o pipefail
           gradle -p android assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
