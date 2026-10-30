@@ -400,7 +400,7 @@ details.help summary{font-weight:600;cursor:pointer}
       <div class="row col"><label for="tickerText">টিকারের লেখা (প্রতি লাইনে একটা)</label><textarea id="tickerText" rows="4" placeholder="খালি রাখলে সাধারণ কিছু লেখা চলবে"></textarea></div>
       <div class="row col"><label for="tickerSpeed">গতি</label><input id="tickerSpeed" type="range" min="60" max="320"></div>
     </div>
-    <p class="hint" style="text-align:center;margin-top:24px">TF News Studio · সংস্করণ 1.8</p>
+    <p class="hint" style="text-align:center;margin-top:24px">TF News Studio · সংস্করণ 1.9</p>
   </div>
   <nav class="nav"></nav>
 </section>
@@ -2192,6 +2192,95 @@ STUDIO.bgphoto=function(sc,t){const m=scImg(sc)||groupPhoto(sc);if(!m)return STU
   for(let q=0;q<3;q++){ctx.save();ctx.globalAlpha=.55;rect(0,wallB-6-q*3,W,2,T_.acc);ctx.restore();}
   rect(0,wallB,W,H-wallB,T_.floor);ctx.save();ctx.globalAlpha=.1;for(let q=0;q<6;q++)line(0,wallB+18+q*q*8,W,wallB+18+q*q*8,'#fff',2);ctx.restore();
   const ax=v===1?1280:(v===2?560:660);const mo=mouthLevel(t);anchorFig(ax,930,1.55,{mouth:mo,t,seed:6,look:v===1?-.15:.12});newsDesk(ax,930,1250,1.35);anchorHands(ax,930,1.55,t);studioLower(sc,t);};
+
+/* ============ STUDIO VOICE: noise removal + de-ess + warm EQ + compression + loudness (runs after recording) ============ */
+if(!settings.voiceFx)settings.voiceFx='studio';          // 'studio' | 'raw'
+if(!settings.voiceNR)settings.voiceNR='mid';             // 'low' | 'mid' | 'high'
+let VOICE_RAW=null,VOICE_STUDIO=null,VOICE_BUSY=false;
+
+// cleaner capture: phone noise-suppression/AGC make voices thin and "boxy"; we clean it ourselves afterwards
+{const _gum=navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+ if(_gum)navigator.mediaDevices.getUserMedia=function(c){if(c&&c.audio&&!c.video&&settings.voiceFx==='studio')c={audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:1,sampleRate:48000}};return _gum(c);};}
+{const _MR=window.MediaRecorder;if(_MR){const MR=function(stream,opt){opt=Object.assign({},opt||{});if(stream&&stream.getVideoTracks&&!stream.getVideoTracks().length&&!opt.audioBitsPerSecond){opt.audioBitsPerSecond=160000;}return new _MR(stream,opt);};MR.prototype=_MR.prototype;MR.isTypeSupported=_MR.isTypeSupported.bind(_MR);window.MediaRecorder=MR;}}
+
+function fft(re,im,inv){const n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+  for(let len=2;len<=n;len<<=1){const a=(inv?2:-2)*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const p=i+k,q=p+len/2;const tr=re[q]*cr-im[q]*ci,ti=re[q]*ci+im[q]*cr;re[q]=re[p]-tr;im[q]=im[p]-ti;re[p]+=tr;im[p]+=ti;const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr;}}}
+  if(inv)for(let i=0;i<n;i++){re[i]/=n;im[i]/=n;}}
+
+async function vfxYield(msg){if(msg)setStatus(msg);await new Promise(r=>setTimeout(r,0));}
+
+/* spectral noise reduction + gentle de-essing (STFT, Hann, 75% overlap) */
+async function vfxDenoise(x,sr,level){
+  const N=1024,H=256,nb=N/2+1,win=new Float32Array(N);for(let i=0;i<N;i++)win[i]=.5-.5*Math.cos(2*Math.PI*i/N);
+  const frames=Math.max(1,Math.floor((x.length-N)/H)+1);const mags=new Float32Array(frames*nb);const re=new Float64Array(N),im=new Float64Array(N);const en=new Float32Array(frames);
+  for(let f=0;f<frames;f++){const o=f*H;for(let i=0;i<N;i++){re[i]=(x[o+i]||0)*win[i];im[i]=0;}fft(re,im,false);let e=0;for(let k=0;k<nb;k++){const p=re[k]*re[k]+im[k]*im[k];mags[f*nb+k]=p;e+=p;}en[f]=e;if(f%800===0)await vfxYield('🎙 ভয়েস বিশ্লেষণ… '+toBn(Math.round(f/frames*50))+'%');}
+  // noise profile = average of the quietest 12% frames
+  const ord=[...en.keys()].sort((a,b)=>en[a]-en[b]);const nq=Math.max(4,Math.floor(frames*.12));const noise=new Float64Array(nb);for(let j=0;j<nq;j++){const f=ord[j];for(let k=0;k<nb;k++)noise[k]+=mags[f*nb+k];}for(let k=0;k<nb;k++)noise[k]/=nq;
+  const A={low:1.4,mid:2.1,high:3}[level]||2.1,FL={low:.16,mid:.1,high:.06}[level]||.1;const hz=k=>k*sr/N;
+  const kS0=Math.round(5200*N/sr),kS1=Math.min(nb-1,Math.round(10500*N/sr)),kV0=Math.round(300*N/sr),kV1=Math.round(3200*N/sr);
+  const out=new Float32Array(x.length+N),wsum=new Float32Array(x.length+N);let prevG=new Float32Array(nb).fill(1);const G=new Float32Array(nb);
+  const qFloor=en[ord[Math.floor(frames*.12)]]||1e-9;
+  for(let f=0;f<frames;f++){const o=f*H;for(let i=0;i<N;i++){re[i]=(x[o+i]||0)*win[i];im[i]=0;}fft(re,im,false);
+    for(let k=0;k<nb;k++){const p=mags[f*nb+k];let g=1-A*noise[k]/(p+1e-12);g=Math.max(FL,g);G[k]=Math.max(g,prevG[k]*.55);}
+    for(let k=1;k<nb-1;k++)prevG[k]=(G[k-1]+2*G[k]+G[k+1])/4;prevG[0]=G[0];prevG[nb-1]=G[nb-1];
+    // de-ess: if hiss band is strong compared to the voice band, pull it down
+    let sE=0,vE=0;for(let k=kS0;k<=kS1;k++)sE+=mags[f*nb+k];for(let k=kV0;k<=kV1;k++)vE+=mags[f*nb+k];const ratio=sE/(vE+1e-12);const ds=ratio>.35?Math.max(.35,Math.sqrt(.35/ratio)):1;
+    // residual gate in pauses
+    const gate=en[f]<qFloor*3?.35:1;
+    for(let k=0;k<nb;k++){let g=prevG[k]*gate;if(k>=kS0&&k<=kS1)g*=ds;re[k]*=g;im[k]*=g;if(k>0&&k<N/2){re[N-k]=re[k];im[N-k]=-im[k];}}
+    fft(re,im,true);for(let i=0;i<N;i++){out[o+i]+=re[i]*win[i];wsum[o+i]+=win[i]*win[i];}
+    if(f%800===0)await vfxYield('🎙 নয়েজ সরানো হচ্ছে… '+toBn(50+Math.round(f/frames*40))+'%');}
+  const y=new Float32Array(x.length);for(let i=0;i<x.length;i++)y[i]=wsum[i]>1e-3?out[i]/wsum[i]:0;return y;}
+
+/* warm studio EQ + compressor + loudness, done natively */
+async function vfxChain(y,sr){const oc=new OfflineAudioContext(1,y.length,sr);const b=oc.createBuffer(1,y.length,sr);b.copyToChannel(y,0);const s=oc.createBufferSource();s.buffer=b;
+  const bq=(type,f,g,q)=>{const n=oc.createBiquadFilter();n.type=type;n.frequency.value=f;if(g!=null)n.gain.value=g;if(q!=null)n.Q.value=q;return n;};
+  const chain=[bq('highpass',90,null,.7),bq('lowshelf',160,1.5,null),bq('peaking',420,-1.5,1),bq('peaking',1150,-2,1.2),bq('peaking',3400,1.2,1),bq('peaking',7200,-3.5,2.2),bq('highshelf',11000,-1.5,null),bq('lowpass',15500,null,.7)];
+  const comp=oc.createDynamicsCompressor();comp.threshold.value=-24;comp.knee.value=12;comp.ratio.value=3.2;comp.attack.value=.006;comp.release.value=.18;
+  const lim=oc.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.001;lim.release.value=.06;
+  let n=s;chain.forEach(c=>{n.connect(c);n=c;});n.connect(comp);const mk=oc.createGain();mk.gain.value=1.8;comp.connect(mk);mk.connect(lim);lim.connect(oc.destination);s.start();
+  const r=await oc.startRendering();const z=r.getChannelData(0);
+  // loudness: speech RMS to about -17 dBFS, peaks under -1 dBFS
+  let ss=0,cnt=0;const W=Math.round(sr*.05);for(let i=0;i+W<z.length;i+=W){let e=0;for(let j=i;j<i+W;j++)e+=z[j]*z[j];e/=W;if(e>1e-5){ss+=e;cnt++;}}
+  const rms=Math.sqrt(ss/Math.max(1,cnt))||1e-4;let g=Math.pow(10,-17/20)/rms;let pk=0;for(let i=0;i<z.length;i++)pk=Math.max(pk,Math.abs(z[i]));if(pk*g>.89)g=.89/pk;
+  for(let i=0;i<z.length;i++){let v=z[i]*g;if(v>.95)v=.95+(v-.95)*.2;else if(v<-.95)v=-.95+(v+.95)*.2;z[i]=v;}return r;}
+
+async function enhanceVoice(blob,level){
+  const ab=await blob.arrayBuffer();const tmp=new (window.AudioContext||window.webkitAudioContext)();const buf=await tmp.decodeAudioData(ab.slice(0));try{tmp.close();}catch(e){}
+  // mono + resample to 32 kHz (plenty for voice, faster on phones)
+  const sr=32000;const oc=new OfflineAudioContext(1,Math.ceil(buf.duration*sr),sr);const s=oc.createBufferSource();s.buffer=buf;s.connect(oc.destination);s.start();const mono=(await oc.startRendering()).getChannelData(0);
+  let mean=0;for(let i=0;i<mono.length;i++)mean+=mono[i];mean/=mono.length||1;for(let i=0;i<mono.length;i++)mono[i]-=mean;
+  const y=await vfxDenoise(mono,sr,level);await vfxYield('🎙 স্টুডিও সাউন্ড বসানো হচ্ছে… ৯৫%');const r=await vfxChain(y,sr);const w=toWav(r);w._fx=true;return w;}
+
+/* hook: every new voice (recorded or uploaded) is cleaned automatically unless "raw" is chosen */
+{const _lab=loadAudioBlob;loadAudioBlob=async function(blob){
+  if(blob&&blob._fx)return _lab(blob);if(blob&&blob._raw)return _lab(blob);
+  VOICE_RAW=blob;VOICE_STUDIO=null;try{VOICE_RAW._raw=true;}catch(e){}
+  if(settings.voiceFx==='studio'&&!VOICE_BUSY){VOICE_BUSY=true;try{VOICE_STUDIO=await enhanceVoice(blob,settings.voiceNR);VOICE_BUSY=false;const d=await _lab(VOICE_STUDIO);vfxUI();setStatus('✔ স্টুডিও কোয়ালিটির ভয়েস তৈরি হয়েছে (নয়েজ সরানো, পরিষ্কার ও সমান আওয়াজ)। "আসল" শুনতে চাইলে নিচে বদলাতে পারবেন।',true);return d;}
+    catch(e){console.warn('voice fx failed',e);VOICE_BUSY=false;}}
+  const d=await _lab(blob);vfxUI();return d;};}
+async function vfxSwitch(mode){settings.voiceFx=mode;save();vfxUI();if(!VOICE_RAW)return;const keep=scenes.map(s=>[s.manual,s.dur]);
+  let b=VOICE_RAW;if(mode==='studio'){if(!VOICE_STUDIO){VOICE_BUSY=true;try{VOICE_STUDIO=await enhanceVoice(VOICE_RAW,settings.voiceNR);}catch(e){alert('ভয়েস প্রসেস করা যায়নি');}VOICE_BUSY=false;}b=VOICE_STUDIO||VOICE_RAW;}
+  pause();audioEl.src=URL.createObjectURL(b);await new Promise(r=>{audioEl.onloadedmetadata=r;setTimeout(r,1500);});hasAudio=true;voiceButtons();
+  scenes.forEach((s,i)=>{if(keep[i]){s.manual=keep[i][0];s.dur=keep[i][1];}});layout();buildEvents();renderList();dirty=true;
+  setStatus(mode==='studio'?'✔ এখন স্টুডিও ভয়েস চলছে।':'✔ এখন আসল (র) ভয়েস চলছে।',true);}
+function vfxUI(){const box=$('#vfxBox');if(!box)return;box.querySelectorAll('[data-vfx]').forEach(b=>b.classList.toggle('on',b.dataset.vfx===settings.voiceFx));box.querySelectorAll('[data-nr]').forEach(b=>b.classList.toggle('on',b.dataset.nr===settings.voiceNR));
+  const ab=$('#vfxAB');if(ab)ab.classList.toggle('hidden',!VOICE_RAW);}
+(function vfxInject(){const anchor=$('#clearVoice');if(!anchor||$('#vfxBox'))return;const d=document.createElement('div');d.id='vfxBox';
+  d.innerHTML=IS_MOB?`<h2 class="sec">ভয়েসের মান</h2><div class="group"><div class="row col"><span class="lab"><b>স্টুডিও ভয়েস</b><small>রেকর্ডের পর নিজে থেকে নয়েজ সরাবে, তীক্ষ্ণ/ক্যানক্যানে ভাব কমাবে, আওয়াজ সমান করবে</small></span>
+    <div class="segc"><button data-vfx="studio">🎙 স্টুডিও</button><button data-vfx="raw">আসল (র)</button></div></div>
+    <div class="row col"><span class="lab"><b>নয়েজ কমানোর মাত্রা</b></span><div class="segc"><button data-nr="low">হালকা</button><button data-nr="mid">মাঝারি</button><button data-nr="high">বেশি</button></div></div>
+    <div class="row col hidden" id="vfxAB"><div style="display:flex;gap:8px"><button class="btn sec sm" id="vfxPlayRaw" style="flex:1">▶ আসল শুনুন</button><button class="btn sec sm" id="vfxPlayStu" style="flex:1">▶ স্টুডিও শুনুন</button></div></div></div>`
+   :`<div class="vbox" style="margin-top:10px"><h3>🎙 ভয়েসের মান</h3><p>রেকর্ড বা অডিও দেওয়ার পর নিজে থেকে নয়েজ সরানো, তীক্ষ্ণ ভাব কমানো আর আওয়াজ সমান করা হয়।</p>
+    <div class="row"><b>ভয়েস:</b> <button class="ghost small" data-vfx="studio">🎙 স্টুডিও</button><button class="ghost small" data-vfx="raw">আসল (র)</button> <b style="margin-left:10px">নয়েজ কমানো:</b> <button class="ghost small" data-nr="low">হালকা</button><button class="ghost small" data-nr="mid">মাঝারি</button><button class="ghost small" data-nr="high">বেশি</button></div>
+    <div class="row hidden" id="vfxAB" style="margin-top:6px"><button class="ghost small" id="vfxPlayRaw">▶ আসল শুনুন</button><button class="ghost small" id="vfxPlayStu">▶ স্টুডিও শুনুন</button></div></div>`;
+  (IS_MOB?anchor:anchor.closest('.row')||anchor).before(d);
+  const st=document.createElement('style');st.textContent='#vfxBox [data-vfx].on,#vfxBox [data-nr].on{background:#17171A!important;color:#fff!important;border-color:#17171A!important}';document.head.appendChild(st);
+  d.querySelectorAll('[data-vfx]').forEach(b=>b.onclick=()=>vfxSwitch(b.dataset.vfx));
+  d.querySelectorAll('[data-nr]').forEach(b=>b.onclick=async()=>{settings.voiceNR=b.dataset.nr;save();VOICE_STUDIO=null;vfxUI();if(VOICE_RAW&&settings.voiceFx==='studio')await vfxSwitch('studio');});
+  let prevA=null;const ap=async(which)=>{if(prevA){prevA.pause();prevA=null;}let b=which==='raw'?VOICE_RAW:VOICE_STUDIO;if(which!=='raw'&&!b){VOICE_STUDIO=await enhanceVoice(VOICE_RAW,settings.voiceNR);b=VOICE_STUDIO;}if(!b)return;prevA=new Audio(URL.createObjectURL(b));prevA.play();setTimeout(()=>{if(prevA)prevA.pause();},12000);};
+  $('#vfxPlayRaw').onclick=()=>ap('raw');$('#vfxPlayStu').onclick=()=>ap('studio');vfxUI();})();
+{const cv_=$('#clearVoice');if(cv_)cv_.addEventListener('click',()=>{VOICE_RAW=null;VOICE_STUDIO=null;vfxUI();});}
 
 /* ============ MOBILE APP LAYER ============ */
 const IS_APP=!!(window.Android&&window.Android.saveBegin);
