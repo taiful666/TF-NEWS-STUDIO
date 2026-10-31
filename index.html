@@ -199,6 +199,25 @@ body.tf2 .ov .bar{border-radius:6px}
  #tfPanel{width:auto;border-right:0;overflow:visible}#tfWork{overflow:visible}
  #tfTop{height:auto;flex-wrap:wrap;padding:8px 10px;gap:6px}#tfTop .brand small{display:none}
 }
+/* v2.1: voice quality, sync tools, thumbnail */
+#tfVP .vpsrc{font-size:13.5px;background:#F7F4EF;border-radius:10px;padding:8px 12px;margin-bottom:10px;color:var(--t2)}
+#tfVP .vpsw{display:flex;flex-direction:row!important;gap:10px;align-items:flex-start;cursor:pointer;margin-bottom:10px}
+#tfVP .vpsw input{width:20px;height:20px;margin-top:3px;accent-color:var(--ac)}
+#tfVP .vpsw small{display:block;font-size:12.5px;color:var(--t2);line-height:1.5}
+#tfVP .vpgrid{display:grid;gap:10px;transition:opacity .2s}
+#tfVP .vpgrid.off{opacity:.4;pointer-events:none}
+#tfVP label{display:flex;flex-direction:column;gap:4px;font-size:14px}
+#tfVP label b{color:var(--ac);font-size:13px}
+#tfVP .vpvol{margin-top:10px}
+#tfFlash{position:absolute;left:50%;top:22px;transform:translate(-50%,-10px);background:rgba(23,23,26,.88);color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:3}
+#tfFlash.on{opacity:1;transform:translate(-50%,0)}
+#tfPrev{position:relative}
+kbd{font-family:inherit;font-size:11px;border:1px solid var(--bd);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--t2);background:#fff}
+.tllead{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--t2)}
+.tllead select{height:32px;padding:0 8px!important;border-radius:16px!important;font-size:13px!important}
+#tfThumb .thprev{background:#0E0F13;border-radius:12px;overflow:hidden;display:flex;justify-content:center}
+#tfThumb canvas{width:100%;height:auto;max-height:420px;object-fit:contain;display:block}
+#tfThumb .thup{display:inline-flex;align-items:center;border:1px solid var(--bd);border-radius:10px;padding:6px 12px;cursor:pointer;font-size:14px;font-weight:600;background:#fff}
 </style><!--/tf2css--></head>
 <body>
 <header><span class="logo">TF</span><h1>News & Explainer Studio — স্ক্রিপ্ট থেকে ভিডিও, রিলস ও লাইভ</h1><small>ভিডিও আপনার কম্পিউটারেই তৈরি হয়</small><span style="flex:1"></span><button class="red small" id="nwOpenBtn" style="margin-right:8px">📰 পত্রিকা থেকে খবর</button><button class="ghost small freshStart" style="color:#fff;border-color:rgba(255,255,255,.6)">↺ নতুন করে শুরু</button></header>
@@ -2999,6 +3018,10 @@ if(!LIVE)setTimeout(()=>nwLoad(),800);
 
 
 
+
+
+
+
 <script id="tf2">/* ===================================================================
    TF News Studio — web v2
    1) one master clock: voice + music + pictures always in sync
@@ -3014,7 +3037,14 @@ const ico=(n,s=20)=>`<svg class="ti" width="${s}" height="${s}" viewBox="0 0 24 
 
 /* ---------------- state ---------------- */
 const TL=settings.tl=Object.assign({vOff:0,vIn:0,vOut:null,mOff:0,mIn:0,mOut:null,mLoop:true},settings.tl||{});
-let VSY=null;                          // voice sync: {n,sig,marks[] (voice-file seconds), end}
+let VSY=null;
+const TH_=settings.th=Object.assign({pos:'start',ds:1.2,de:3,title:'',sub:'',badge:'ব্রেকিং নিউজ',color:'red',bg:'auto',text:true},settings.th||{});
+if(settings.syncLead==null)settings.syncLead=.15;
+let noShift=false;
+const thS=()=>noShift?0:((TH_.pos==='start'||TH_.pos==='both')?+TH_.ds||0:0);
+const thE=()=>(TH_.pos==='end'||TH_.pos==='both')?+TH_.de||0:0;
+const vo=()=>(TL.vOff||0)+thS();
+const lead=i=>{const sc=scenes[i];return(i>0&&sc&&!sc.special)?(+settings.syncLead||0):0;};                          // voice sync: {n,sig,marks[] (voice-file seconds), end}
 const AN={v:{src:null,d:null,busy:null},m:{src:null,d:null,busy:null}};
 const sig=()=>scenes.length+':'+scenes.map(s=>String(s.raw||s.text||'').length).join(',');
 musicEl.loop=false;
@@ -3061,14 +3091,27 @@ async function autoSync(){
   const n=scenes.length;let a=0;while(a<n&&scenes[a].special)a++;let b=n-1;while(b>=a&&scenes[b].special)b--;
   const M=new Array(n).fill(0);const S0=Math.max(0,sp.start-.15),S1=Math.min(dur,sp.end+.35);
   if(a<=b){
-    const w=i=>{const sc=scenes[i];const L=String(sc.text||'').length;return sc.isChapter?Math.max(12,L*1.1+10):Math.max(10,L);};
-    let remW=0;for(let i=a;i<=b;i++)remW+=w(i);
-    let cur=S0;M[a]=S0;
-    for(let i=a;i<b;i++){remW-=w(i);
-      const exp=cur+(S1-cur)*(w(i)/(w(i)+remW));const win=Math.max(1.2,(exp-cur)*.4);
-      let best=null,bs=1e9;
-      for(const p of sp.pauses){const c=p[1]-.12;if(c<=cur+.7||c>=S1-.7)continue;const dist=Math.abs(c-exp);if(dist>win)continue;const sc=dist-Math.min(.9,p[1]-p[0])*1.4;if(sc<bs){bs=sc;best=c;}}
-      cur=best!=null?best:exp;M[i+1]=cur;}
+    // Global best fit (dynamic programming): every scene boundary sits in a real pause of the voice,
+    // scene lengths follow the amount of text, and a new news item prefers the longest pauses.
+    const K=b-a+1;const w=i=>{const sc=scenes[a+i];const L=String(sc.text||'').replace(/\*/g,'').length;return sc.isChapter?Math.max(10,L*.9+6):Math.max(10,L);};
+    const ws=[];let sw=0;for(let i=0;i<K;i++){ws.push(w(i));sw+=ws[i];}const rate=(S1-S0)/sw;const ex=ws.map(x=>x*rate);
+    const C=[];sp.pauses.forEach(p=>{const t=p[1]-.12;if(t>S0+.6&&t<S1-.6)C.push({t,len:Math.min(1.6,p[1]-p[0]),p:1});});
+    {let acc=S0;for(let i=0;i<K-1;i++){acc+=ex[i];C.push({t:acc,len:0,p:0});}}
+    C.sort((x,y)=>x.t-y.t);const NC=C.length;
+    if(K===1||!NC){let acc=S0;for(let i=0;i<K;i++){M[a+i]=acc;acc+=ex[i];}}
+    else{
+      const seg=(i,d)=>{if(d<.45)return 1e6;const r=Math.log(d/ex[i]);return 7*r*r;};
+      const bon=(i,c)=>c.p?-(scenes[a+i+1].isChapter?4.5:2.6)*c.len-.4:1.4;   // boundary i = start of scene i+1
+      const dp=[],from=[];
+      for(let i=0;i<K-1;i++){dp.push(new Float64Array(NC).fill(1e9));from.push(new Int32Array(NC).fill(-1));}
+      for(let j=0;j<NC;j++)dp[0][j]=seg(0,C[j].t-S0)+bon(0,C[j]);
+      for(let i=1;i<K-1;i++)for(let j=0;j<NC;j++){let best=1e9,bj=-1;const tj=C[j].t;
+        for(let k=j-1;k>=0;k--){const d=tj-C[k].t;if(d>ex[i]*4+6)break;if(dp[i-1][k]>=1e9)continue;const v=dp[i-1][k]+seg(i,d);if(v<best){best=v;bj=k;}}
+        if(bj>=0){dp[i][j]=best+bon(i,C[j]);from[i][j]=bj;}}
+      let bj=-1,bv=1e9;for(let j=0;j<NC;j++){const v=dp[K-2][j]+seg(K-1,S1-C[j].t);if(v<bv){bv=v;bj=j;}}
+      if(bj<0){let acc=S0;for(let i=0;i<K;i++){M[a+i]=acc;acc+=ex[i];}}
+      else{M[a]=S0;for(let i=K-2;i>=0;i--){M[a+i+1]=C[bj].t;bj=from[i][bj];}}
+    }
   }
   let t=a<=b?S0:0;for(let i=a-1;i>=0;i--){t-=autoDur(scenes[i]);M[i]=t;}
   let e=a<=b?S1:Math.max(0,t);for(let i=b+1;i<n;i++){if(i<a)continue;M[i]=e+(i===b+1&&a<=b?.3:0);e=M[i]+autoDur(scenes[i]);}
@@ -3078,27 +3121,29 @@ async function autoSync(){
 }
 function retime(){
   if(!synced())return false;const off=TL.vOff||0,M=VSY.marks,n=scenes.length;let prev=-1;
-  for(let i=0;i<n;i++){let s=i===0?0:off+M[i];if(s<prev+.4)s=prev+.4;scenes[i].start=s;prev=s;}
+  for(let i=0;i<n;i++){let s=i===0?0:off+M[i]-lead(i);if(s<prev+.4)s=prev+.4;scenes[i].start=s;prev=s;}
   for(let i=0;i<n;i++){const sc=scenes[i];const e=i<n-1?scenes[i+1].start:Math.max(off+VSY.end,sc.start+(sc.special?autoDur(sc):1));sc.dur=e-sc.start;sc.manual=true;}
   const L=scenes[n-1];total=L.start+L.dur;return true;
 }
 function relayout(full){layout();buildEvents();if(full!==false)renderList();dirty=true;tlDraw();chip();try{save();}catch(e){}}
 
 /* ---------------- override engine pieces ---------------- */
-{const _L=layout;layout=function(){_L();if(retime()){try{assignShots(scenes);}catch(e){}}};}
+{const _L=layout;layout=function(){_L();if(retime()){try{assignShots(scenes);}catch(e){}}
+  if(scenes.length){const s0=thS();if(s0)scenes.forEach(x=>x.start+=s0);total+=s0+thE();}};}
 applyMarks=function(marks,end){
   const n=scenes.length;const M=[];
   for(let i=0;i<n;i++){let m=marks[i];if(m==null||!isFinite(m))m=i?M[i-1]+autoDur(scenes[i-1]):0;if(i&&m<M[i-1]+.3)m=M[i-1]+.3;M.push(m);}
   let E=end;if(!(E>M[n-1]+.3))E=M[n-1]+autoDur(scenes[n-1]);
-  VSY={n,sig:sig(),marks:M,end:E,kind:'manual'};TL.vOff=0;TL.vIn=0;TL.vOut=null;
+  VSY={n,sig:sig(),marks:M,end:E,kind:'manual'};TL.vOff=0;TL.vIn=0;TL.vOut=null;noShift=false;
   relayout();T=0;dirty=true;analyze('v');
 };
-{const _rf=recordFrom;recordFrom=async function(N){if(synced()&&TL.vOff){TL.vOff=0;relayout(false);}return _rf(N);};}
+{const _rf=recordFrom;recordFrom=async function(N){if(synced()){TL.vOff=0;}noShift=true;relayout(false);return _rf(N);};}
+{const c=$('#tpCancel');if(c)c.addEventListener('click',()=>{if(noShift){noShift=false;relayout(false);}});}
 {const _B=build;build=function(keep){_B(keep);
   if(hasAudio&&scenes.length&&!synced())autoSync().then(ok=>{if(ok)setStatus('স্ক্রিপ্ট বদলেছে — ভয়েসের সাথে দৃশ্যগুলো আবার অটো মেলানো হয়েছে।',true);});
   tlDraw();chip();};}
 
-function voicePos(t){if(!hasAudio)return null;const p=t-(TL.vOff||0);return(p>=(TL.vIn||0)&&p<vOutT()-.02)?p:null;}
+function voicePos(t){if(!hasAudio)return null;const p=t-vo();return(p>=(TL.vIn||0)&&p<vOutT()-.02)?p:null;}
 function musicPos(t){if(!hasMusic)return null;const L=mDur();const rel=t-(TL.mOff||0);if(rel<0)return null;if(!L)return rel;
   const[a,b]=mSeg();const len=b-a;if(TL.mLoop){if(t>total+.05)return null;return a+(rel%len);}return rel<len?a+rel:null;}
 function syncMedia(force){
@@ -3129,12 +3174,12 @@ function step(ts){
   if(playing){
     const dt=Math.min(1,Math.max(0,(ts-lastTs)/1000));lastTs=ts;
     const vp=voicePos(T);
-    if(vp!=null&&!audioEl.paused&&!audioEl.seeking&&audioEl.readyState>2){const tv=(TL.vOff||0)+audioEl.currentTime;T=Math.abs(tv-T)<1.5?tv:T+dt;}else T+=dt;
+    if(vp!=null&&!audioEl.paused&&!audioEl.seeking&&audioEl.readyState>2){const tv=vo()+audioEl.currentTime;T=Math.abs(tv-T)<1.5?tv:T+dt;}else T+=dt;
     while(evIdx<EVENTS.length&&EVENTS[evIdx][0]<=T){playSfx(EVENTS[evIdx][1]);evIdx++;}
     if(T>=total){T=total;pause();if(exporting)exporting.finish();}else syncMedia(false);
     dirty=true;}
   if(dirty){
-    renderAt((T===0&&!playing&&!exporting&&total>3)?1.6:Math.min(T,Math.max(0,total-.001)));dirty=false;
+    renderAt((T===0&&!playing&&!exporting&&total>3)?thS()+1.6:Math.min(T,Math.max(0,total-.001)));dirty=false;
     GALLERY.forEach(g=>{if(g.kind==='video'&&!g.img.paused&&(g.img._used!==FRAME||!playing))g.img.pause();});
     $('#tcode').textContent=fmtTime(T)+' / '+fmtTime(total);
     const ai=scenes.length?sceneAt(T):-1;if(ai!==lastActive){D.querySelectorAll('.srow').forEach((r,k)=>r.classList.toggle('on',k===ai));lastActive=ai;}
@@ -3169,7 +3214,7 @@ exportVideo=async function(){
 $('#exportBtn').onclick=()=>exportVideo();
 
 /* ---------------- voice: upload / auto / clear ---------------- */
-$('#audioFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+$('#audioFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;nextSrc=null;
   if(f.size>400*1024*1024){alert('ফাইলটা অনেক বড় (৪০০ MB-এর বেশি)। ছোট অডিও ফাইল দিন।');return;}
   pause();setStatus('অডিও পড়া হচ্ছে… একটু অপেক্ষা করুন।');
   const d=await loadAudioBlob(f);if(!d)return;
@@ -3208,6 +3253,7 @@ const PANES=[
  ['voice','mic','ভয়েস','ভয়েস','এখানেই রেকর্ড করুন, বা আগে রেকর্ড করা অডিও দিন। ভয়েস দিলে দৃশ্যগুলো নিজে থেকেই কথার সাথে মিলে যাবে।'],
  ['music','volume-2','মিউজিক','মিউজিক ও সাউন্ড','ব্যাকগ্রাউন্ড মিউজিক বেছে নিন। কথা বলার সময় মিউজিক নিজে থেকে আস্তে হবে। টাইমলাইনে টেনে সরানো ও কাটা যায়।'],
  ['design','palette','ডিজাইন','ভিডিওর ডিজাইন','ভিডিওর মাপ, চ্যানেলের নাম, খবর পাঠক, টিকার আর অন্যান্য সেটিংস।'],
+ ['thumb','layout-template','থাম্বনেইল','থাম্বনেইল','খবর থেকে নিজে থেকেই আকর্ষণীয় থাম্বনেইল তৈরি হয়। ভিডিওর শুরুতে/শেষে ফ্রেম হিসেবে থাকে, আবার আলাদা ছবি (JPG) হিসেবেও ডাউনলোড করা যায়।'],
  ['live','radio','লাইভ','লাইভ স্টুডিও','সারাদিন ফেসবুক/YouTube-এ খবর চালানোর জন্য।']];
 const rail=$('#tfRail'),panel=$('#tfPanel'),work=$('#tfWork');const paneEl={};
 PANES.forEach(([id,ic,short,title,desc],k)=>{
@@ -3270,7 +3316,7 @@ function chip(){const c=$('#tfChip');if(!c)return;
 const tcv=$('#tlCv'),tx=tcv.getContext('2d');
 const RY={ru:[0,26],sc:[26,52],v:[78,66],m:[144,66]};const TH=210;
 const V={pps:0,sx:0,fit:true,W:600,dpr:1,drag:null,hover:null};
-const span=()=>Math.max(10,total||0,hasAudio?(TL.vOff||0)+vDur():0)+4;
+const span=()=>Math.max(10,total||0,hasAudio?vo()+vDur():0)+4;
 const X=t=>(t-V.sx)*V.pps;const TT=x=>V.sx+x/V.pps;
 function fitView(){V.pps=Math.max(.5,(V.W-8)/span());V.sx=0;V.fit=true;}
 function clampView(){const vis=V.W/V.pps;V.sx=clamp(V.sx,0,Math.max(0,span()-vis));const s=$('#tlScroll');const mx=Math.max(0,span()-vis);s.disabled=mx<=0;s.value=mx>0?V.sx/mx*1000:0;}
@@ -3305,7 +3351,7 @@ function drawTL(){
   // voice
   const [vy,vh]=RY.v;tx.fillStyle='#FBFAF7';tx.fillRect(0,vy,W,vh);tx.fillStyle='#F0EBE3';tx.fillRect(0,vy,W,1);
   if(!hasAudio){tx.fillStyle='#9a958c';tx.fillText('ভয়েস নেই — বাঁ পাশে "ভয়েস" থেকে রেকর্ড করুন বা অডিও ফাইল দিন',10,vy+vh/2);}
-  else{const d=AN.v.d;const L=vDur();const o=TL.vOff||0;const a=TL.vIn||0,b=vOutT();const fx0=X(o),fx1=X(o+L),ax=X(o+a),bx=X(o+b);
+  else{const d=AN.v.d;const L=vDur();const o=vo();const a=TL.vIn||0,b=vOutT();const fx0=X(o),fx1=X(o+L),ax=X(o+a),bx=X(o+b);
     tx.fillStyle='rgba(229,57,27,.07)';rr(fx0,vy+6,fx1-fx0,vh-12,8);tx.fill();if(d)wave(d,0,L,fx0,fx1,vy+vh/2,vh/2-10,'rgba(229,57,27,.22)');
     tx.fillStyle='#FCE9E4';rr(ax,vy+6,bx-ax,vh-12,8);tx.fill();
     tx.save();tx.beginPath();tx.rect(ax,vy,bx-ax,vh);tx.clip();if(d)wave(d,0,L,fx0,fx1,vy+vh/2,vh/2-10,'#E5391B');else{tx.fillStyle='#b9a39d';tx.fillText('ওয়েভফর্ম তৈরি হচ্ছে…',ax+10,vy+vh/2);}tx.restore();
@@ -3339,7 +3385,7 @@ function drawTL(){
 function hit(x,y){
   if(y<26)return{k:'seek'};const t=TT(x);
   if(y<RY.v[0]){for(let i=1;i<scenes.length;i++){if(Math.abs(x-X(scenes[i].start))<=6)return{k:'bound',i};}const i=scenes.length?sceneAt(t):-1;return i>=0&&t<=total?{k:'scene',i}:{k:'seek'};}
-  if(y<RY.m[0]){if(!hasAudio)return{k:'seek'};const o=TL.vOff||0,a=X(o+(TL.vIn||0)),b=X(o+vOutT());if(Math.abs(x-a)<=7)return{k:'vIn'};if(Math.abs(x-b)<=7)return{k:'vOut'};if(x>a&&x<b)return{k:'vMove'};return{k:'seek'};}
+  if(y<RY.m[0]){if(!hasAudio)return{k:'seek'};const o=vo(),a=X(o+(TL.vIn||0)),b=X(o+vOutT());if(Math.abs(x-a)<=7)return{k:'vIn'};if(Math.abs(x-b)<=7)return{k:'vOut'};if(x>a&&x<b)return{k:'vMove'};return{k:'seek'};}
   if(!hasMusic)return{k:'seek'};const[a,b]=mSeg();const o=TL.mOff||0,x0=X(o),x1=X(o+(b-a));if(Math.abs(x-x0)<=7)return{k:'mIn'};if(Math.abs(x-x1)<=7)return{k:'mOut'};
   const endX=TL.mLoop?X(Math.max(total,o+(b-a))):x1;if(x>x0&&x<endX)return{k:'mMove'};return{k:'seek'};
 }
@@ -3350,7 +3396,7 @@ tcv.addEventListener('pointermove',e=>{const[x,y]=pos(e);
   const g=V.drag;const dt=(x-g.x)/V.pps;g.moved=g.moved||Math.abs(x-g.x)>3;const t=TT(x);const snap=(v,to)=>Math.abs((v-to)*V.pps)<8?to:v;
   if(g.k==='seek'){seek(t);}
   else if(g.k==='bound'&&g.moved){const i=g.i;const lo=scenes[i-1].start+.5,hi=(i+1<scenes.length?scenes[i+1].start:total+30)-.5;const nt=clamp(t,lo,Math.max(lo,hi));
-    if(synced()){VSY.marks[i]=nt-(TL.vOff||0);}else{const d0=nt-scenes[i].start;scenes[i-1].dur+=d0;scenes[i-1].manual=true;if(i<scenes.length-1){scenes[i].dur=Math.max(.5,scenes[i].dur-d0);scenes[i].manual=true;}}
+    if(synced()){VSY.marks[i]=nt-vo()+lead(i);}else{const d0=nt-scenes[i].start;scenes[i-1].dur+=d0;scenes[i-1].manual=true;if(i<scenes.length-1){scenes[i].dur=Math.max(.5,scenes[i].dur-d0);scenes[i].manual=true;}}
     relayout(false);}
   else if(g.k==='vMove'&&g.moved){let o=g.o.vOff+dt;o=snap(o,0);TL.vOff=Math.max(-vDur()+1,o);relayout(false);if(playing)syncMedia(true);}
   else if(g.k==='vIn'){TL.vIn=clamp(g.o.vIn+dt,0,vOutT()-.5);tlDraw();}
@@ -3379,6 +3425,212 @@ $('#tlMVol').addEventListener('input',e=>{const m=$('#musicVol');if(m){m.value=e
 $('#tlLoop').onchange=e=>{TL.mLoop=e.target.checked;try{save();}catch(er){}tlDraw();if(playing)syncMedia(true);};
 // keep waveforms fresh when audio sources change (studio voice, built-in music…)
 setInterval(()=>{if(hasAudio&&audioEl.getAttribute('src')&&AN.v.src!==audioEl.src&&!AN.v.busy)analyze('v');if(hasMusic&&musicEl.getAttribute('src')&&AN.m.src!==musicEl.src&&!AN.m.busy)analyze('m');if(!hasAudio&&VSY){VSY=null;}chip();},1200);
+
+/* ===================== SYNC TOOLS ===================== */
+// "change scene here": while listening, press N (or the button) when the new news/sentence starts
+function cutHere(){if(!scenes.length)return;let bi=-1,bd=1e9;for(let i=1;i<scenes.length;i++){const d=Math.abs(scenes[i].start-T);if(d<bd){bd=d;bi=i;}}
+  if(bi<0||bd>12){setStatus('কাছাকাছি কোনো দৃশ্য বদলের জায়গা পাওয়া যায়নি।');return;}
+  const i=bi;const lo=scenes[i-1].start+.5,hi=(i+1<scenes.length?scenes[i+1].start:total)-.5;const nt=clamp(T,lo,Math.max(lo,hi));
+  if(synced())VSY.marks[i]=nt-vo()+lead(i);else{const d0=nt-scenes[i].start;scenes[i-1].dur+=d0;scenes[i-1].manual=true;if(i<scenes.length-1){scenes[i].dur=Math.max(.5,scenes[i].dur-d0);scenes[i].manual=true;}}
+  relayout(true);flash('✂ দৃশ্য '+toBn(i+1)+' এখন '+fmtTime(nt)+' থেকে শুরু');}
+function flash(msg){let f=$('#tfFlash');if(!f){f=D.createElement('div');f.id='tfFlash';$('#tfPrev').appendChild(f);}f.textContent=msg;f.classList.add('on');clearTimeout(f._t);f._t=setTimeout(()=>f.classList.remove('on'),1600);}
+{const tr=$('#tfPrev .transport');const b=D.createElement('button');b.className='ghost';b.id='tfCut';b.style.cssText='height:40px;border-radius:20px;display:inline-flex;align-items:center;gap:6px';
+  b.innerHTML=ico('scissors',15)+'দৃশ্য এখানে বদলাও <kbd>N</kbd>';b.title='চালানোর সময় যখন নতুন খবর/বাক্য শুরু হয় তখন চাপুন — কাছের দৃশ্য বদলের জায়গা ঠিক ওই মুহূর্তে সরে যাবে';b.onclick=cutHere;tr.insertBefore(b,$('#tcode'));}
+D.addEventListener('keydown',e=>{if(e.code!=='KeyN'||e.ctrlKey||e.metaKey||e.altKey)return;if(['TEXTAREA','INPUT','SELECT'].includes((D.activeElement||{}).tagName))return;if(!$('#tp').classList.contains('hidden'))return;e.preventDefault();cutHere();});
+// global timing: picture a little earlier / later than the voice
+{const tlbar=$('#tfTL .tlbar');const w=D.createElement('label');w.className='tllead';w.title='সব দৃশ্য কথার কতটা আগে বদলাবে';
+  w.innerHTML='ছবি বদলাবে কথার <select id="tlLead"><option value="-0.5">০.৫ সে. পরে</option><option value="0">ঠিক একসাথে</option><option value="0.15">০.১৫ সে. আগে (প্রস্তাবিত)</option><option value="0.3">০.৩ সে. আগে</option><option value="0.5">০.৫ সে. আগে</option><option value="1">১ সে. আগে</option></select>';
+  tlbar.insertBefore(w,$('#tlAuto'));const sl=$('#tlLead');sl.value=String(settings.syncLead);if(sl.selectedIndex<0)sl.value='0.15';
+  sl.onchange=()=>{const old=+settings.syncLead||0,nw=+sl.value;
+    // keep manually placed boundaries where the user put them relative to the voice
+    settings.syncLead=nw;relayout(true);flash(nw>0?'ছবি কথার '+toBn(nw)+' সে. আগে বদলাবে':nw<0?'ছবি কথার '+toBn(-nw)+' সে. পরে বদলাবে':'ছবি আর কথা একসাথে বদলাবে');};}
+
+/* ===================== VOICE QUALITY ===================== */
+if(settings.vpNR==null)settings.vpNR=2;if(settings.vpFx==null)settings.vpFx=70;if(settings.vpVol==null)settings.vpVol=0;if(settings.vpFileOn==null)settings.vpFileOn=false;
+let VP={src:null,on:false,busy:false};let nextSrc=null;
+{const _sr=startRecord;startRecord=async function(){nextSrc='mic';return _sr.apply(this,arguments);};}
+{const _rf2=recordFrom;recordFrom=async function(N){nextSrc='mic';return _rf2(N);};}
+const _labPlain=loadAudioBlob;
+loadAudioBlob=async function(blob){
+  if(!blob||blob._fx||blob._raw)return _labPlain(blob);
+  const src=nextSrc||'file';nextSrc=null;
+  VOICE_RAW=blob;try{VOICE_RAW._raw=true;}catch(e){}VOICE_STUDIO=null;VP.src=src;VP.on=src==='mic'?true:!!settings.vpFileOn;
+  const d=await applyVP(true);vpUI();return d;};
+function vpOpt(){return VP.on?{nr:+settings.vpNR,fx:+settings.vpFx/100,vol:+settings.vpVol}:{nr:0,fx:0,vol:+settings.vpVol};}
+async function applyVP(first){
+  if(!VOICE_RAW)return 0;const o=vpOpt();VP.busy=true;vpUI();let b=VOICE_RAW;
+  try{if(o.nr>0||o.fx>0||Math.abs(o.vol)>.05)b=await processVoice(VOICE_RAW,o);}catch(e){console.warn('voice process',e);setStatus('ভয়েস প্রসেস করা যায়নি — আসল ভয়েস ব্যবহার হচ্ছে।');b=VOICE_RAW;}
+  VP.busy=false;const wasPlaying=playing;if(!first)pause();VOICE_STUDIO=b===VOICE_RAW?null:b;
+  const d=await _labPlain(b);vpUI();AN.v.src=null;analyze('v');
+  if(!first){setStatus(VP.on?'✔ ভয়েসের মান বদলানো হয়েছে।':'✔ আসল ভয়েস চলছে'+(Math.abs(o.vol)>.05?' (ভলিউম বদলানো)':'')+'।',true);if(wasPlaying)play();}
+  return d;}
+async function processVoice(blob,o){
+  const ab=await blob.arrayBuffer();const tmp=new (window.AudioContext||window.webkitAudioContext)();const buf=await tmp.decodeAudioData(ab.slice(0));try{tmp.close();}catch(e){}
+  const sr=48000;await vfxYield('🎙 ভয়েস প্রস্তুত হচ্ছে…');
+  let x;{const oc=new OfflineAudioContext(1,Math.ceil(buf.duration*sr),sr);const s=oc.createBufferSource();s.buffer=buf;chainNodes(s,[BQ(oc,'highpass',o.nr||o.fx?70:20,null,.7)]).connect(oc.destination);s.start();x=(await oc.startRendering()).getChannelData(0);}
+  const proc=o.nr>0||o.fx>0;let y=x;
+  if(proc){let pk0=0;for(let i=0;i<x.length;i++)pk0=Math.max(pk0,Math.abs(x[i]));if(pk0>0&&pk0<.3){const g=.5/pk0;for(let i=0;i<x.length;i++)x[i]*=g;}}
+  // 1) noise removal (AI) — amount 1..3
+  if(o.nr>0){const n=o.nr>=3?2:1;let r=await rnnDenoise(x,{k:0,n});if(n===2)r={y:(await rnnDenoise(r.y,{k:1,n})).y,vad:r.vad};y=r.y;
+    if(o.nr===1){for(let i=0;i<y.length;i++)y[i]=y[i]*.75+x[i]*.25;}
+    const F=480,floor=o.nr>=3?.08:o.nr===1?.35:.15,hold=Math.round(.25*sr/F),vad=r.vad;let h=0,g=floor;const gf=new Float32Array(vad.length);
+    for(let f=0;f<vad.length;f++){if(vad[f]>.55)h=hold;else if(h>0)h--;const want=(h>0||vad[f]>.55)?1:floor;g+=(want-g)*(want>g?.6:.08);gf[f]=g;}
+    for(let i=0;i<y.length;i++){const f=i/F,a=Math.floor(f),b2=Math.min(gf.length-1,a+1),t=f-a;y[i]*=gf[a]*(1-t)+gf[b2]*t;}}
+  // 2) studio effect (de-ess + broadcast EQ + compression) — amount 0..100 %
+  if(o.fx>0){await vfxYield('🎙 স্টুডিও সাউন্ড বসানো হচ্ছে…');
+    let z=new Float32Array(y);
+    {const lo=await renderFx(z,sr,(oc,s)=>chainNodes(s,[BQ(oc,'lowpass',5500,null,.707),BQ(oc,'lowpass',5500,null,.707)]));const hi=await renderFx(z,sr,(oc,s)=>chainNodes(s,[BQ(oc,'highpass',5500,null,.707),BQ(oc,'highpass',5500,null,.707)]));
+     const at=Math.exp(-1/(.002*sr)),rl=Math.exp(-1/(.06*sr));let el=0,eh=0,gg=1;for(let i=0;i<z.length;i++){const a=Math.abs(lo[i]),b=Math.abs(hi[i]);el=a>el?a:el*rl+a*(1-rl);eh=b>eh?b*(1-at)+eh*at:eh*rl+b*(1-rl);const want=eh>el*.45?Math.max(.3,el*.45/(eh+1e-9)):1;gg+=(want-gg)*(want<gg?.2:.004);z[i]=lo[i]+hi[i]*gg;}}
+    z=await renderFx(z,sr,(oc,s)=>{const c1=oc.createDynamicsCompressor();c1.threshold.value=-26;c1.knee.value=10;c1.ratio.value=2.6;c1.attack.value=.01;c1.release.value=.2;const c2=oc.createDynamicsCompressor();c2.threshold.value=-14;c2.knee.value=6;c2.ratio.value=4;c2.attack.value=.003;c2.release.value=.08;const mk=oc.createGain();mk.gain.value=2;
+      return chainNodes(s,[BQ(oc,'highpass',85,null,.7),BQ(oc,'lowshelf',180,2,null),BQ(oc,'peaking',320,-1.5,1),BQ(oc,'peaking',1000,-1.5,1.1),BQ(oc,'peaking',2900,-3,1.1),BQ(oc,'peaking',4600,-1.5,1.4),BQ(oc,'highshelf',9500,1.5,null),BQ(oc,'lowpass',16500,null,.7),c1,mk,c2]);});
+    const rz=speechRms(z,sr),ry=speechRms(y,sr);const k=o.fx;const gy=rz/(ry||1e-4);for(let i=0;i<y.length;i++)y[i]=y[i]*gy*(1-k)+z[i]*k;}
+  // 3) loudness (only when processing) + your own volume + peak limiter
+  await vfxYield('🎙 ভলিউম ঠিক করা হচ্ছে…');
+  let g=Math.pow(10,(o.vol||0)/20);if(proc){const r=speechRms(y,sr);g*=Math.min(12,Math.pow(10,-17/20)/(r||1e-4));}
+  y=limit(y,sr,g);
+  const out=new AudioBuffer({length:y.length,sampleRate:sr,numberOfChannels:1});out.copyToChannel(y,0);const w=toWav(out);w._fx=true;return w;}
+function speechRms(y,sr){let ss=0,cnt=0;const Wn=Math.round(sr*.4);for(let i=0;i+Wn<y.length;i+=Wn){let e=0;for(let j=i;j<i+Wn;j+=2)e+=y[j]*y[j];e/=Wn/2;if(e>1e-5){ss+=e;cnt++;}}return Math.sqrt(ss/Math.max(1,cnt));}
+function limit(y,sr,gain){const ceil=Math.pow(10,-1.5/20),la=Math.round(.005*sr),rel=Math.exp(-1/(.08*sr));const n=y.length;const need=new Float32Array(n);for(let i=0;i<n;i++){const a=Math.abs(y[i]*gain);need[i]=a>ceil?ceil/a:1;}
+  let gl=1;const z=new Float32Array(n);const dq=[];let h=0;for(let i=0;i<n+la;i++){if(i<n){while(dq.length>h&&need[dq[dq.length-1]]>=need[i])dq.pop();dq.push(i);}while(dq.length>h&&dq[h]<i-la)h++;const m=dq.length>h?need[dq[h]]:1;gl=m<gl?m:gl*rel+m*(1-rel);if(gl>1)gl=1;const j=i-la;if(j>=0)z[j]=Math.max(-ceil,Math.min(ceil,y[j]*gain*gl));
+    if(h>4096){dq.splice(0,h);h=0;}}return z;}
+// UI
+const vpc=D.createElement('div');vpc.className='card';vpc.id='tfVP';vpc.dataset.tfPlaced=1;
+vpc.innerHTML=`<h2>ভয়েসের মান ও ভলিউম</h2>
+<div class="vpsrc" id="vpSrc">এখনো ভয়েস নেই।</div>
+<label class="vpsw"><input type="checkbox" id="vpOn"><span><b>স্টুডিও কোয়ালিটি চালু</b><small id="vpOnHint">মাইক্রোফোনে রেকর্ড করলে নিজে থেকেই চালু থাকে। বাইরের ফাইলে চাইলে টিক দিন।</small></span></label>
+<div class="vpgrid" id="vpCtl">
+ <label>নয়েজ কমানো <b id="vpNRv"></b><input type="range" id="vpNR" min="0" max="3" step="1"></label>
+ <label>স্টুডিও ইফেক্ট (পরিষ্কার, ভরাট আওয়াজ) <b id="vpFxv"></b><input type="range" id="vpFx" min="0" max="100" step="5"></label>
+</div>
+<label class="vpvol">ভলিউম <b id="vpVolv"></b><input type="range" id="vpVol" min="-6" max="12" step="1"></label>
+<div class="row" style="margin-top:10px;gap:8px"><button class="red" id="vpApply">✔ প্রয়োগ করুন</button><button class="ghost small" id="vpRaw">▶ আসল শুনুন</button><button class="ghost small" id="vpNow">▶ এখনকারটা শুনুন</button></div>
+<div class="hint" style="margin-top:8px">বদলানোর পর "প্রয়োগ করুন" চাপুন। দৃশ্য আর ভয়েসের মিল যেমন আছে তেমনই থাকবে।</div>`;
+{const vc=card('#audioFile');if(vc)vc.after(vpc);else paneEl.voice.appendChild(vpc);const ob=$('#vfxBox');if(ob)ob.classList.add('hidden');}
+const NRL=['বন্ধ','হালকা','মাঝারি','বেশি'];
+function vpUI(){$('#vpOn').checked=VP.on;$('#vpNR').value=settings.vpNR;$('#vpFx').value=settings.vpFx;$('#vpVol').value=settings.vpVol;
+  $('#vpNRv').textContent=NRL[+settings.vpNR]||'';$('#vpFxv').textContent=toBn(settings.vpFx)+'%';$('#vpVolv').textContent=(settings.vpVol>0?'+':'')+toBn(settings.vpVol)+' dB';
+  $('#vpCtl').classList.toggle('off',!VP.on);
+  $('#vpSrc').textContent=!VOICE_RAW?'এখনো ভয়েস নেই। ভয়েস দিলে এখানে মান ঠিক করতে পারবেন।':VP.src==='mic'?'🎙 মাইক্রোফোনে রেকর্ড করা ভয়েস — স্টুডিও কোয়ালিটি নিজে থেকেই চালু।':'📁 ফাইল থেকে দেওয়া ভয়েস — স্টুডিও কোয়ালিটি ঐচ্ছিক।';
+  const ap=$('#vpApply');ap.disabled=!VOICE_RAW||VP.busy;ap.textContent=VP.busy?'প্রসেস হচ্ছে…':'✔ প্রয়োগ করুন';$('#vpRaw').disabled=!VOICE_RAW;$('#vpNow').disabled=!hasAudio;}
+let abA=null;const abPlay=(b)=>{if(abA){abA.pause();abA=null;return;}if(!b)return;abA=new Audio(URL.createObjectURL(b));const st=AN.v.d?Math.max(0,speech(AN.v.d).start-.2):0;abA.currentTime=st;abA.play().catch(()=>{});setTimeout(()=>{if(abA){abA.pause();abA=null;}},10000);};
+$('#vpOn').onchange=e=>{VP.on=e.target.checked;if(VP.src!=='mic'){settings.vpFileOn=VP.on;}save();vpUI();};
+$('#vpNR').oninput=e=>{settings.vpNR=+e.target.value;save();vpUI();};$('#vpFx').oninput=e=>{settings.vpFx=+e.target.value;save();vpUI();};$('#vpVol').oninput=e=>{settings.vpVol=+e.target.value;save();vpUI();};
+$('#vpApply').onclick=()=>applyVP(false);$('#vpRaw').onclick=()=>abPlay(VOICE_RAW);$('#vpNow').onclick=()=>abPlay(VOICE_STUDIO||VOICE_RAW);
+$('#clearVoice').addEventListener('click',()=>{VP.src=null;setTimeout(vpUI,50);});
+vpUI();
+
+/* ===================== THUMBNAIL ===================== */
+let THBG=null;IDB.get('thBg').then(b=>{if(b)blobImg(b).then(im=>{THBG=im;thDraw();});}).catch(()=>{});
+const TCOL={red:{ac:'#E5391B',hl:'#FFD400',bt:'#fff'},yellow:{ac:'#FFD400',hl:'#FFD400',bt:'#17171A'},blue:{ac:'#1F6FEB',hl:'#7FE0FF',bt:'#fff'},green:{ac:'#0F8A5F',hl:'#FFE15A',bt:'#fff'}};
+const clean=s=>String(s||'').replace(/[*#]/g,'').replace(/\s+/g,' ').trim();
+function thData(){const ch=scenes.filter(s=>s.isChapter&&!s.special);const content=scenes.filter(s=>!s.special&&!s.isChapter);
+  const head=clean(TH_.title)||clean(ch[0]&&ch[0].text)||clean(content[0]&&(content[0].hl||content[0].text))||clean(settings.brand)||'আজকের খবর';
+  const pics=[];const seen=new Set();const add=im=>{if(im&&!seen.has(im)&&(im.naturalWidth||im.videoWidth)){seen.add(im);pics.push(im);}};
+  const groups=ch.length?ch.map((c,k)=>scenes.filter(s=>!s.special&&!s.isChapter&&(s.chIdx||1)===k+1)):[content];
+  groups.forEach(g=>{for(const s of g){let im=null;try{im=scImg(s)||groupPhoto(s);}catch(e){}if(im){add(im);break;}}});
+  if(!pics.length)GALLERY.forEach(g=>{if(g.kind!=='video')add(g.img);});
+  let hl='';const raw=clean(ch[0]&&ch[0].raw||'');const m=String((ch[0]&&ch[0].raw)||'').match(/\*([^*]+)\*/);if(m&&!TH_.title)hl=clean(m[1]);
+  return{head,hl,count:Math.max(ch.length,1),others:ch.slice(1).map(c=>clean(c.text)),pics};}
+function cover(c,im,x,y,w,h,zoom=1){const iw=im.naturalWidth||im.videoWidth||im.width,ih=im.naturalHeight||im.videoHeight||im.height;if(!iw||!ih)return;const s=Math.max(w/iw,h/ih)*zoom;const dw=iw*s,dh=ih*s;c.drawImage(im,x+(w-dw)/2,y+(h-dh)/2,dw,dh);}
+function wrapT(c,text,maxW,size,maxLines){c.font=`700 ${size}px ${FONT}`;const words=text.split(' ');const lines=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(c.measureText(t).width>maxW&&cur){lines.push(cur);cur=w;}else cur=t;}if(cur)lines.push(cur);return lines.length<=maxLines?lines:null;}
+function fitHead(c,text,maxW,maxH,big,maxLines){for(let s=big;s>=28;s-=4){const L=wrapT(c,text,maxW,s,maxLines);if(L&&L.length*s*1.22<=maxH)return{L,s};}const L=wrapT(c,text,maxW,28,99)||[text];return{L:L.slice(0,maxLines),s:28};}
+function drawThumb(c,w,h){
+  const d=thData();const col=TCOL[TH_.color]||TCOL.red;const land=w>=h*1.15;const u=Math.min(w,h)/1080*(land?1:1);
+  c.save();c.textBaseline='alphabetic';c.fillStyle='#0B0E1A';c.fillRect(0,0,w,h);
+  const bg=TH_.bg!=='auto'&&THBG?THBG:d.pics[0];
+  if(land){
+    if(bg){c.save();c.filter='saturate(1.18) contrast(1.08)';cover(c,bg,w*.28,0,w*.72,h,1.04);c.restore();}
+    else{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#151B33');g.addColorStop(1,col.ac);c.fillStyle=g;c.fillRect(0,0,w,h);c.globalAlpha=.08;c.fillStyle='#fff';for(let x=-h;x<w;x+=46*u){c.beginPath();c.moveTo(x,h);c.lineTo(x+h,0);c.lineTo(x+h+18*u,0);c.lineTo(x+18*u,h);c.fill();}c.globalAlpha=1;}
+    let g=c.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(8,10,22,.98)');g.addColorStop(.36,'rgba(8,10,22,.94)');g.addColorStop(.62,'rgba(8,10,22,.35)');g.addColorStop(.8,'rgba(8,10,22,0)');c.fillStyle=g;c.fillRect(0,0,w,h);
+    g=c.createLinearGradient(0,h*.55,0,h);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.75)');c.fillStyle=g;c.fillRect(0,0,w,h);
+    // accent slash
+    if(!bg){c.fillStyle=col.ac;c.beginPath();c.moveTo(w*.585,0);c.lineTo(w*.605,0);c.lineTo(w*.52,h);c.lineTo(w*.5,h);c.fill();}
+    else{c.fillStyle=col.ac;c.fillRect(0,0,14*u,h);}
+    if(!bg){// emblem on the right when there is no photo
+      const cx=w*.79,cy=h*.47,R=h*.3;c.save();for(let k=3;k>=1;k--){c.globalAlpha=.10*k;c.strokeStyle='#fff';c.lineWidth=6*u;c.beginPath();c.arc(cx,cy,R*(1+k*.22),0,7);c.stroke();}
+      c.globalAlpha=1;c.fillStyle='rgba(255,255,255,.96)';c.beginPath();c.arc(cx,cy,R,0,7);c.fill();
+      const pth=new Path2D((typeof ICONS!=='undefined'&&(ICONS['tv']||ICONS['newspaper']))||'');c.translate(cx-R*.55,cy-R*.55);c.scale(R*1.1/24,R*1.1/24);c.strokeStyle=col.ac==='#FFD400'?'#17171A':col.ac;c.lineWidth=1.7;c.lineCap='round';c.lineJoin='round';c.stroke(pth);c.restore();}
+  }else{
+    const ph=h*.52;if(bg){c.save();c.filter='saturate(1.18) contrast(1.08)';cover(c,bg,0,0,w,ph+80*u,1.04);c.restore();}
+    const g=c.createLinearGradient(0,ph-260*u,0,ph+120*u);g.addColorStop(0,'rgba(8,10,22,0)');g.addColorStop(1,'rgba(8,10,22,1)');c.fillStyle=g;c.fillRect(0,0,w,h);c.fillStyle='#080A16';c.fillRect(0,ph+110*u,w,h);
+  }
+  const P=land?70*u:56*u;let y=land?92*u:h*.5;
+  // badge + date
+  if(TH_.badge){c.font=`700 ${44*u}px ${FONT}`;const bw=c.measureText(TH_.badge).width+64*u;c.fillStyle=col.ac;rrC(c,P,y-50*u,bw,70*u,12*u);c.fill();c.fillStyle=col.bt;c.beginPath();c.arc(P+24*u,y-15*u,8*u,0,7);c.fill();c.fillText(TH_.badge,P+44*u,y);
+    if(settings.date){c.font=`600 ${30*u}px ${FONT}`;const dw=c.measureText(settings.date).width+36*u;c.fillStyle='rgba(255,255,255,.14)';rrC(c,P+bw+14*u,y-44*u,dw,58*u,29*u);c.fill();c.fillStyle='#fff';c.fillText(settings.date,P+bw+32*u,y-4*u);}}
+  // headline
+  if(TH_.text!==false){const maxW=land?w*.52:w-P*2;const top=y+40*u;const maxH=land?h*.5:h*.3;const f=fitHead(c,d.head,maxW,maxH,land?150*u:118*u,land?3:4);
+    const smN=d.pics.slice(bg===d.pics[0]?1:0,4).length;const list=land?d.others.slice(0,smN>1?2:3):[];
+    const blockH=f.L.length*f.s*1.2+(list.length?40*u+list.length*62*u:0)+90*u;let ly=top+f.s;
+    if(land){const free=(h-P)-top-blockH;if(free>0)ly+=free*.42;}const hlw=d.hl?d.hl.split(' '):null;
+    f.L.forEach((ln,li)=>{c.font=`700 ${f.s}px ${FONT}`;let x=P;const ws=ln.split(' ');
+      ws.forEach((wd,k)=>{const isH=hlw?hlw.includes(wd):(li===f.L.length-1&&f.L.length>1)||(f.L.length===1&&k>=Math.ceil(ws.length*.5));const t=wd+(k<ws.length-1?' ':'');
+        c.lineWidth=f.s*.14;c.strokeStyle='rgba(0,0,0,.85)';c.lineJoin='round';c.strokeText(wd,x,ly);c.fillStyle=isH?col.hl:'#fff';c.fillText(wd,x,ly);x+=c.measureText(t).width;});
+      ly+=f.s*1.2;});
+    c.fillStyle=col.ac;c.fillRect(P,ly-f.s*.75,180*u,12*u);
+    // sub line
+    const sub=clean(TH_.sub)||(d.count>1?'+ আরও '+toBn(d.count-1)+'টি গুরুত্বপূর্ণ খবর':'');
+    if(sub){c.font=`700 ${38*u}px ${FONT}`;const sw=Math.min(c.measureText(sub).width+48*u,land?w*.5:w-P*2);c.fillStyle='#fff';rrC(c,P,ly-f.s*.35,sw,64*u,32*u);c.fill();c.fillStyle='#17171A';c.save();c.beginPath();c.rect(P,ly-f.s*.4,sw-20*u,80*u);c.clip();c.fillText(sub,P+24*u,ly-f.s*.35+45*u);c.restore();}
+    if(list.length){let yy=ly-f.s*.35+(sub?110*u:30*u);c.font=`600 ${34*u}px ${FONT}`;list.forEach((t,k)=>{c.fillStyle=col.ac;rrC(c,P,yy-34*u,46*u,46*u,10*u);c.fill();c.fillStyle=col.bt;c.textAlign='center';c.fillText(toBn(k+2),P+23*u,yy+1*u);c.textAlign='left';
+      c.fillStyle='rgba(255,255,255,.92)';let tt=t;while(c.measureText(tt).width>w*.5-70*u&&tt.length>4)tt=tt.slice(0,-2);if(tt!==t)tt+='…';c.fillText(tt,P+64*u,yy);yy+=62*u;});}}
+  // small photos of the other news
+  const sm=d.pics.slice(bg===d.pics[0]?1:0,4);
+  if(sm.length){const cw=land?250*u:260*u,chh=land?160*u:170*u;
+    sm.forEach((im,k)=>{const x=land?w-P-cw-k*(cw*.62):P+k*(cw+24*u),yy=land?h-P-chh-k*26*u:h-P-chh-40*u;c.save();c.translate(x+cw/2,yy+chh/2);c.rotate((land?(-3+k*3):(k%2?2:-2))*Math.PI/180);
+      c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=24*u;c.fillStyle='#fff';c.fillRect(-cw/2-8*u,-chh/2-8*u,cw+16*u,chh+16*u);c.shadowBlur=0;c.beginPath();c.rect(-cw/2,-chh/2,cw,chh);c.clip();cover(c,im,-cw/2,-chh/2,cw,chh);c.restore();
+      c.fillStyle=col.ac;c.beginPath();c.arc(x+12*u,yy+10*u,26*u,0,7);c.fill();c.fillStyle=col.bt;c.font=`700 ${30*u}px ${FONT}`;c.textAlign='center';c.fillText(toBn(k+2),x+12*u,yy+21*u);c.textAlign='left';});}
+  // logo + brand
+  const lr=58*u;const lx=w-P-lr,ly2=P+lr*.2;
+  if(logoImg){c.save();c.shadowColor='rgba(0,0,0,.4)';c.shadowBlur=18*u;c.fillStyle='#fff';c.beginPath();c.arc(lx,ly2+lr*.8,lr,0,7);c.fill();c.shadowBlur=0;c.beginPath();c.arc(lx,ly2+lr*.8,lr-6*u,0,7);c.clip();const iw=logoImg.naturalWidth,ih=logoImg.naturalHeight,s=(lr*1.7)/Math.max(iw,ih);c.drawImage(logoImg,lx-iw*s/2,ly2+lr*.8-ih*s/2,iw*s,ih*s);c.restore();}
+  else if(settings.brand){c.font=`700 ${34*u}px ${FONT}`;const bw=c.measureText(settings.brand).width+36*u;c.fillStyle='rgba(0,0,0,.55)';rrC(c,w-P-bw,P-10*u,bw,60*u,30*u);c.fill();c.fillStyle='#fff';c.fillText(settings.brand,w-P-bw+18*u,P+31*u);}
+  c.restore();}
+function rrC(c,x,y,w,h,r){c.beginPath();c.roundRect?c.roundRect(x,y,w,h,r):c.rect(x,y,w,h);}
+// show it inside the video
+const inThumb=t=>scenes.length&&((thS()>0&&t<thS())||(thE()>0&&t>=total-thE()));
+{const _ra=renderAt;renderAt=function(t){if(inThumb(t)){drawThumb(mctx,cv.width,cv.height);try{duckFrame();}catch(e){}return;}_ra(t);};
+  window.__tf.renderAt=t=>renderAt(t);}
+// card UI
+const thc=D.createElement('div');thc.className='card';thc.id='tfThumb';thc.dataset.tfPlaced=1;
+thc.innerHTML=`<div class="thprev"><canvas id="thCv" width="1280" height="720"></canvas></div>
+<div class="row" style="gap:8px;margin:10px 0 4px"><button class="red" id="thDl">⬇ থাম্বনেইল ডাউনলোড (JPG)</button><button class="ghost small" id="thSee">▶ ভিডিওতে দেখুন</button></div>
+<div class="settings" style="margin-top:10px">
+ <label style="grid-column:1/-1">বড় শিরোনাম (খালি রাখলে প্রথম খবরের শিরোনাম)<input id="thTitle" placeholder="যেমন: অতিরিক্ত ডিআইজি বরখাস্ত"></label>
+ <label style="grid-column:1/-1">নিচের ছোট লেখা (খালি রাখলে "+ আরও ...টি খবর")<input id="thSub"></label>
+ <label>উপরের লাল লেবেল<input id="thBadge"></label>
+ <label>রং<select id="thColor"><option value="red">লাল + হলুদ</option><option value="yellow">হলুদ</option><option value="blue">নীল</option><option value="green">সবুজ</option></select></label>
+ <label>পেছনের ছবি<select id="thBg"><option value="auto">অটো — খবরের ছবি</option><option value="frame">প্রিভিউর একটা ফ্রেম</option><option value="own">নিজের ছবি</option></select></label>
+ <label>ভিডিওতে কোথায় থাকবে<select id="thPos"><option value="start">শুরুতে (১ সেকেন্ড)</option><option value="end">শেষে (৩ সেকেন্ড)</option><option value="both">শুরু ও শেষ দুই জায়গায়</option><option value="off">ভিডিওতে রাখবেন না</option></select></label>
+ <label class="chk" style="grid-column:1/-1"><input type="checkbox" id="thText"> থাম্বনেইলে লেখা দেখাবে</label>
+</div>
+<div class="row" style="gap:8px;margin-top:10px"><button class="ghost small" id="thGrab">📸 প্রিভিউর এখনকার ফ্রেম নিন</button><label class="ghost small thup">🖼 নিজের ছবি দিন<input type="file" id="thFile" accept="image/*" hidden></label></div>
+<div class="hint" style="margin-top:8px">ফ্রেম নিতে: প্রিভিউতে পছন্দের জায়গায় থামান → "এখনকার ফ্রেম নিন"। YouTube-এ ভিডিও দেওয়ার সময় "Upload thumbnail"-এ ডাউনলোড করা JPG দিন। ফেসবুকে ভিডিওর ফ্রেম থেকেও এটা বেছে নিতে পারবেন (ভিডিওর শুরুতে/শেষে থাকে)।</div>`;
+paneEl.thumb.appendChild(thc);
+const thCv=$('#thCv');
+function thSize(){const[aw,ah]=(ASPECTS[settings.aspect]||ASPECTS['16:9']);const land=aw>=ah;const W0=land?1280:720;const H0=Math.round(W0*ah/aw);return[W0,H0];}
+function thDraw(){if(!thCv||paneEl.thumb.classList.contains('hidden'))return;const[w,h]=thSize();if(thCv.width!==w||thCv.height!==h){thCv.width=w;thCv.height=h;}drawThumb(thCv.getContext('2d'),w,h);}
+window.tfThumb=thDraw;
+const bindTh=(id,key,ev='input',chk)=>{const e=$('#'+id);if(chk)e.checked=TH_[key]!==false;else e.value=TH_[key]==null?'':TH_[key];e.addEventListener(ev,()=>{TH_[key]=chk?e.checked:e.value;save();thDraw();if(key==='pos'){relayout(true);}dirty=true;});};
+bindTh('thTitle','title');bindTh('thSub','sub');bindTh('thBadge','badge');bindTh('thColor','color','change');bindTh('thBg','bg','change');bindTh('thPos','pos','change');bindTh('thText','text','change',true);
+$('#thBg').addEventListener('change',()=>{if(TH_.bg==='own'&&!THBG)$('#thFile').click();if(TH_.bg==='frame'&&!THBG)grab();});
+async function setBg(blob){if(!blob)return;await IDB.set('thBg',blob);THBG=await blobImg(blob);thDraw();dirty=true;}
+function grab(){if(!scenes.length){alert('আগে দৃশ্য বানান।');return;}let t=T;if(inThumb(t))t=Math.min(total-thE()-.01,Math.max(thS()+.5,t));
+  const off=D.createElement('canvas');off.width=cv.width;off.height=cv.height;const was=inThumb(T);
+  // draw the real scene frame (not the thumbnail) at time t
+  const keep=TH_.pos;TH_.pos='off';const sh=thS();try{renderAt(Math.max(0,t-(was?0:0)));}finally{TH_.pos=keep;}
+  off.getContext('2d').drawImage(cv,0,0);dirty=true;
+  off.toBlob(b=>{if(!b){alert('ফ্রেম নেওয়া যায়নি।');return;}TH_.bg='frame';$('#thBg').value='frame';save();setBg(b);flash('📸 এই ফ্রেম থাম্বনেইলের পেছনে বসানো হয়েছে');},'image/jpeg',.95);}
+$('#thGrab').onclick=grab;
+$('#thFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>25*1024*1024){alert('ছবিটা অনেক বড়।');return;}TH_.bg='own';$('#thBg').value='own';save();setBg(f);};
+$('#thSee').onclick=()=>{if(!scenes.length)return;pause();if(thS())seek(0);else if(thE())seek(total-thE()+.1);else{alert('থাম্বনেইল এখন ভিডিওতে রাখা বন্ধ। "ভিডিওতে কোথায় থাকবে" বদলান।');return;}$('#tfPrev').scrollIntoView({behavior:'smooth',block:'start'});};
+$('#thDl').onclick=()=>{thDraw();const[w,h]=thSize();const c2=D.createElement('canvas');c2.width=w;c2.height=h;drawThumb(c2.getContext('2d'),w,h);
+  const save2=q=>c2.toBlob(b=>{if(!b){alert('থাম্বনেইল বানানো যায়নি।');return;}if(b.size>1.9*1024*1024&&q>.6)return save2(q-.08);const a=D.createElement('a');a.href=URL.createObjectURL(b);a.download=(settings.brand||'TF-News').replace(/[^\wঀ-৿-]+/g,'-')+'-thumbnail-'+new Date().toISOString().slice(0,10)+'.jpg';D.body.appendChild(a);a.click();a.remove();},'image/jpeg',q);
+  try{save2(.92);}catch(e){alert('এই ছবিটা দিয়ে থাম্বনেইল সেভ করা যাচ্ছে না। অন্য ছবি বেছে নিন।');}};
+// redraw the preview when the pane is opened or things change
+rail.querySelector('[data-p=thumb]').addEventListener('click',()=>setTimeout(thDraw,30));
+{const _b2=build;build=function(k){_b2(k);setTimeout(thDraw,60);};}
+setInterval(()=>{if(!paneEl.thumb.classList.contains('hidden'))thDraw();},2500);
+relayout(false);
+
 sizeCv();chip();
 })();
 </script><!--/tf2-->
