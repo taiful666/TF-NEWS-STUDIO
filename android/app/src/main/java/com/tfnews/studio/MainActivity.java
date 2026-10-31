@@ -251,13 +251,16 @@ public class MainActivity extends Activity {
 
     private Uri publishFile(File f, String name, String mime) throws Exception {
         boolean video = mime.startsWith("video/");
+        boolean image = mime.startsWith("image/");
         ContentValues cv = new ContentValues();
         cv.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
         cv.put(MediaStore.MediaColumns.MIME_TYPE, mime);
         cv.put(MediaStore.MediaColumns.RELATIVE_PATH,
-                (video ? Environment.DIRECTORY_MOVIES : Environment.DIRECTORY_DOWNLOADS) + "/TF News Studio");
+                (video ? Environment.DIRECTORY_MOVIES : image ? Environment.DIRECTORY_PICTURES : Environment.DIRECTORY_DOWNLOADS) + "/TF News Studio");
         Uri collection = video
                 ? MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                : image
+                ? MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
                 : MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
         Uri uri = getContentResolver().insert(collection, cv);
         if (uri == null) return null;
