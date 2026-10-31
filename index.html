@@ -218,6 +218,14 @@ kbd{font-family:inherit;font-size:11px;border:1px solid var(--bd);border-bottom-
 #tfThumb .thprev{background:#0E0F13;border-radius:12px;overflow:hidden;display:flex;justify-content:center}
 #tfThumb canvas{width:100%;height:auto;max-height:420px;object-fit:contain;display:block}
 #tfThumb .thup{display:inline-flex;align-items:center;border:1px solid var(--bd);border-radius:10px;padding:6px 12px;cursor:pointer;font-size:14px;font-weight:600;background:#fff}
+/* v2.2: AI voice */
+#tfTTS .segc{display:flex;background:#F1EDE6;border-radius:12px;padding:4px;margin-bottom:12px}
+#tfTTS .segc button{flex:1;min-height:38px;border:0;border-radius:9px;background:transparent;color:var(--t2);font-weight:600;cursor:pointer}
+#tfTTS .segc button.on{background:#fff;color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#tfTTS>div>label,#tfTTS #ttsG>label,#tfTTS #ttsC>label{display:flex;flex-direction:column;gap:4px;font-size:14px;margin-bottom:8px}
+#tfTTS label.chk{flex-direction:row!important;align-items:flex-start;gap:8px;font-size:13px;color:var(--t2)}
+#tfTTS .keyst{font-size:12px;color:var(--ok);font-weight:600}
+#tfTTS .settings label b{color:var(--ac)}
 </style><!--/tf2css--></head>
 <body>
 <header><span class="logo">TF</span><h1>News & Explainer Studio — স্ক্রিপ্ট থেকে ভিডিও, রিলস ও লাইভ</h1><small>ভিডিও আপনার কম্পিউটারেই তৈরি হয়</small><span style="flex:1"></span><button class="red small" id="nwOpenBtn" style="margin-right:8px">📰 পত্রিকা থেকে খবর</button><button class="ghost small freshStart" style="color:#fff;border-color:rgba(255,255,255,.6)">↺ নতুন করে শুরু</button></header>
@@ -3022,6 +3030,7 @@ if(!LIVE)setTimeout(()=>nwLoad(),800);
 
 
 
+
 <script id="tf2">/* ===================================================================
    TF News Studio — web v2
    1) one master clock: voice + music + pictures always in sync
@@ -3454,7 +3463,7 @@ const _labPlain=loadAudioBlob;
 loadAudioBlob=async function(blob){
   if(!blob||blob._fx||blob._raw)return _labPlain(blob);
   const src=nextSrc||'file';nextSrc=null;
-  VOICE_RAW=blob;try{VOICE_RAW._raw=true;}catch(e){}VOICE_STUDIO=null;VP.src=src;VP.on=src==='mic'?true:!!settings.vpFileOn;
+  VOICE_RAW=blob;try{VOICE_RAW._raw=true;}catch(e){}VOICE_STUDIO=null;VP.src=src;VP.on=src==='mic'?true:src==='ai'?false:!!settings.vpFileOn;
   const d=await applyVP(true);vpUI();return d;};
 function vpOpt(){return VP.on?{nr:+settings.vpNR,fx:+settings.vpFx/100,vol:+settings.vpVol}:{nr:0,fx:0,vol:+settings.vpVol};}
 async function applyVP(first){
@@ -3510,10 +3519,10 @@ const NRL=['বন্ধ','হালকা','মাঝারি','বেশি']
 function vpUI(){$('#vpOn').checked=VP.on;$('#vpNR').value=settings.vpNR;$('#vpFx').value=settings.vpFx;$('#vpVol').value=settings.vpVol;
   $('#vpNRv').textContent=NRL[+settings.vpNR]||'';$('#vpFxv').textContent=toBn(settings.vpFx)+'%';$('#vpVolv').textContent=(settings.vpVol>0?'+':'')+toBn(settings.vpVol)+' dB';
   $('#vpCtl').classList.toggle('off',!VP.on);
-  $('#vpSrc').textContent=!VOICE_RAW?'এখনো ভয়েস নেই। ভয়েস দিলে এখানে মান ঠিক করতে পারবেন।':VP.src==='mic'?'🎙 মাইক্রোফোনে রেকর্ড করা ভয়েস — স্টুডিও কোয়ালিটি নিজে থেকেই চালু।':'📁 ফাইল থেকে দেওয়া ভয়েস — স্টুডিও কোয়ালিটি ঐচ্ছিক।';
+  $('#vpSrc').textContent=!VOICE_RAW?'এখনো ভয়েস নেই। ভয়েস দিলে এখানে মান ঠিক করতে পারবেন।':VP.src==='mic'?'🎙 মাইক্রোফোনে রেকর্ড করা ভয়েস — স্টুডিও কোয়ালিটি নিজে থেকেই চালু।':VP.src==='ai'?'🤖 AI ভয়েস — এমনিতেই পরিষ্কার। চাইলে ভলিউম বা ইফেক্ট বদলাতে পারেন।':'📁 ফাইল থেকে দেওয়া ভয়েস — স্টুডিও কোয়ালিটি ঐচ্ছিক।';
   const ap=$('#vpApply');ap.disabled=!VOICE_RAW||VP.busy;ap.textContent=VP.busy?'প্রসেস হচ্ছে…':'✔ প্রয়োগ করুন';$('#vpRaw').disabled=!VOICE_RAW;$('#vpNow').disabled=!hasAudio;}
 let abA=null;const abPlay=(b)=>{if(abA){abA.pause();abA=null;return;}if(!b)return;abA=new Audio(URL.createObjectURL(b));const st=AN.v.d?Math.max(0,speech(AN.v.d).start-.2):0;abA.currentTime=st;abA.play().catch(()=>{});setTimeout(()=>{if(abA){abA.pause();abA=null;}},10000);};
-$('#vpOn').onchange=e=>{VP.on=e.target.checked;if(VP.src!=='mic'){settings.vpFileOn=VP.on;}save();vpUI();};
+$('#vpOn').onchange=e=>{VP.on=e.target.checked;if(VP.src==='file'){settings.vpFileOn=VP.on;}save();vpUI();};
 $('#vpNR').oninput=e=>{settings.vpNR=+e.target.value;save();vpUI();};$('#vpFx').oninput=e=>{settings.vpFx=+e.target.value;save();vpUI();};$('#vpVol').oninput=e=>{settings.vpVol=+e.target.value;save();vpUI();};
 $('#vpApply').onclick=()=>applyVP(false);$('#vpRaw').onclick=()=>abPlay(VOICE_RAW);$('#vpNow').onclick=()=>abPlay(VOICE_STUDIO||VOICE_RAW);
 $('#clearVoice').addEventListener('click',()=>{VP.src=null;setTimeout(vpUI,50);});
@@ -3630,6 +3639,161 @@ rail.querySelector('[data-p=thumb]').addEventListener('click',()=>setTimeout(thD
 {const _b2=build;build=function(k){_b2(k);setTimeout(thDraw,60);};}
 setInterval(()=>{if(!paneEl.thumb.classList.contains('hidden'))thDraw();},2500);
 relayout(false);
+
+/* ===================== AI VOICE (text → speech): Gemini or Cartesia ===================== */
+// Keys are kept ONLY in this browser (localStorage / sessionStorage). They are never written into the
+// project file, the page code, or GitHub.
+const TTS=settings.tts=Object.assign({prov:'gemini',gVoice:'Charon',gModel:'gemini-3.1-flash-tts-preview',gStyle:'anchor',
+  cVoice:'',cVoiceName:'',cModel:'sonic-3.5',cSpeed:1,cEmotion:'neutral',lang:'bn',gap:.35,chGap:.6},settings.tts||{});
+const KS={get(k){try{return localStorage.getItem(k)||sessionStorage.getItem(k)||'';}catch(e){return'';}},
+  set(k,v,remember){try{localStorage.removeItem(k);sessionStorage.removeItem(k);if(v)(remember?localStorage:sessionStorage).setItem(k,v);}catch(e){}},
+  del(k){try{localStorage.removeItem(k);sessionStorage.removeItem(k);}catch(e){}}};
+const G_VOICES=[['Charon','পুরুষ','তথ্যবহুল — খবরের জন্য ভালো'],['Kore','নারী','দৃঢ়'],['Orus','পুরুষ','দৃঢ়'],['Alnilam','পুরুষ','দৃঢ়'],['Rasalgethi','পুরুষ','তথ্যবহুল'],['Sadaltager','পুরুষ','জ্ঞানী'],['Iapetus','পুরুষ','স্পষ্ট'],['Erinome','নারী','স্পষ্ট'],['Schedar','পুরুষ','সমান'],['Gacrux','নারী','পরিণত'],['Zephyr','নারী','উজ্জ্বল'],['Autonoe','নারী','উজ্জ্বল'],['Puck','পুরুষ','প্রাণবন্ত'],['Laomedeia','নারী','প্রাণবন্ত'],['Sadachbia','পুরুষ','চনমনে'],['Fenrir','পুরুষ','উত্তেজিত'],['Leda','নারী','তরুণ'],['Aoede','নারী','হালকা'],['Callirrhoe','নারী','সহজ'],['Umbriel','পুরুষ','সহজ'],['Algieba','পুরুষ','মসৃণ'],['Despina','নারী','মসৃণ'],['Algenib','পুরুষ','ভারী'],['Achernar','নারী','নরম'],['Pulcherrima','নারী','সোজাসাপটা'],['Achird','পুরুষ','বন্ধুসুলভ'],['Zubenelgenubi','পুরুষ','সাধারণ'],['Vindemiatrix','নারী','কোমল'],['Enceladus','পুরুষ','শ্বাসময়'],['Sulafat','নারী','উষ্ণ']];
+const G_STYLE={anchor:'Read this in Bangla like a confident, clear TV news anchor, at a steady pace',calm:'Read this in Bangla in a calm, warm and natural voice',lively:'Read this in Bangla in an energetic, engaging voice',none:''};
+const ttsCache=new Map();let ttsJob=null;
+const ttsText=s=>String(s||'').replace(/https?:\/\/\S+/g,'').replace(/[*#_`>]/g,'').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/\s+/g,' ').trim();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function ttsSay(msg,ok){const s=$('#ttsStatus');if(!s)return;s.classList.remove('hidden');s.textContent=msg;s.classList.toggle('ok',!!ok);}
+async function decodeAny(ab){const oc=new OfflineAudioContext(1,1,48000);return await oc.decodeAudioData(ab);}
+function pcm16ToBuffer(bytes,rate){const n=Math.floor(bytes.length/2);const dv=new DataView(bytes.buffer,bytes.byteOffset,n*2);const buf=new AudioBuffer({length:Math.max(1,n),sampleRate:rate,numberOfChannels:1});const d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=dv.getInt16(i*2,true)/32768;return buf;}
+const b64bytes=b=>{const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;};
+async function ttsGemini(text){
+  const key=KS.get('tfx_gkey');if(!key)throw new Error('NOKEY');
+  const st=G_STYLE[TTS.gStyle]||'';const prompt=st?st+': '+text:text;
+  const body={contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:TTS.gVoice||'Charon'}}}}};
+  const url='https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(TTS.gModel||'gemini-3.1-flash-tts-preview')+':generateContent';
+  for(let attempt=0;attempt<7;attempt++){
+    if(ttsJob&&ttsJob.cancel)throw new Error('CANCEL');
+    let r;try{r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)});}catch(e){throw new Error('NET');}
+    if(r.status===429||r.status===503||r.status===500){let wait=20;try{const j=await r.json();const m=JSON.stringify(j).match(/"retryDelay":"(\d+)/);if(m)wait=+m[1]+2;}catch(e){}
+      for(let s=wait;s>0;s--){if(ttsJob&&ttsJob.cancel)throw new Error('CANCEL');ttsSay('Gemini একটু ব্যস্ত/সীমা পূর্ণ — '+toBn(s)+' সেকেন্ড পর আবার চেষ্টা হবে… ('+(ttsJob?ttsJob.label:'')+')');await sleep(1000);}continue;}
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){const m=(j.error&&j.error.message)||('HTTP '+r.status);throw new Error(r.status===400&&/API key/i.test(m)?'BADKEY':m);}
+    const part=(((j.candidates||[])[0]||{}).content||{}).parts||[];const p=part.find(x=>x.inlineData&&x.inlineData.data);
+    if(!p){if(attempt<2)continue;throw new Error('Gemini কোনো অডিও দেয়নি (এই লেখাটা হয়তো আটকে গেছে)।');}
+    const bytes=b64bytes(p.inlineData.data);const mt=String(p.inlineData.mimeType||'');
+    if(/wav|mpeg|mp3|ogg/i.test(mt)||(bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70))return await decodeAny(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
+    const rm=mt.match(/rate=(\d+)/);return pcm16ToBuffer(bytes,rm?+rm[1]:24000);}
+  throw new Error('Gemini বারবার ব্যস্ত বলছে। কিছুক্ষণ পর আবার চেষ্টা করুন।');}
+const CV='2026-03-01';
+async function cartFetch(path,opt={}){const key=KS.get('tfx_cartkey');if(!key)throw new Error('NOKEY');
+  let r;try{r=await fetch('https://api.cartesia.ai'+path,Object.assign({},opt,{headers:Object.assign({'Authorization':'Bearer '+key,'Cartesia-Version':CV},opt.headers||{})}));}catch(e){throw new Error('NET');}
+  return r;}
+async function ttsCartesia(text){
+  if(!TTS.cVoice)throw new Error('NOVOICE');
+  const mk=withCfg=>{const b={model_id:TTS.cModel||'sonic-3.5',transcript:text,voice:{mode:'id',id:TTS.cVoice},output_format:{container:'wav',encoding:'pcm_s16le',sample_rate:44100},language:TTS.lang||'bn'};
+    if(withCfg&&(+TTS.cSpeed!==1||TTS.cEmotion!=='neutral'))b.generation_config={speed:+TTS.cSpeed||1,emotion:TTS.cEmotion||'neutral'};return b;};
+  let withCfg=true;
+  for(let attempt=0;attempt<6;attempt++){
+    if(ttsJob&&ttsJob.cancel)throw new Error('CANCEL');
+    const r=await cartFetch('/tts/bytes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(mk(withCfg))});
+    if(r.status===429||r.status>=500){for(let s=8;s>0;s--){if(ttsJob&&ttsJob.cancel)throw new Error('CANCEL');ttsSay('Cartesia ব্যস্ত — '+toBn(s)+' সেকেন্ড পর আবার চেষ্টা…');await sleep(1000);}continue;}
+    if(!r.ok){const t=await r.text().catch(()=>'');if(r.status===400&&withCfg&&/generation_config|speed|emotion/i.test(t)){withCfg=false;continue;}
+      if(r.status===401||r.status===403)throw new Error('BADKEY');let m=t;try{const j=JSON.parse(t);m=j.message||j.error||(j.detail&&JSON.stringify(j.detail))||t;}catch(e){}throw new Error('Cartesia: '+String(m).slice(0,180));}
+    return await decodeAny(await r.arrayBuffer());}
+  throw new Error('Cartesia বারবার ব্যস্ত বলছে। একটু পরে চেষ্টা করুন।');}
+function ttsKey(text){return[TTS.prov,TTS.prov==='gemini'?TTS.gVoice+'|'+TTS.gModel+'|'+TTS.gStyle:TTS.cVoice+'|'+TTS.cModel+'|'+TTS.cSpeed+'|'+TTS.cEmotion+'|'+TTS.lang,text].join('§');}
+async function ttsOne(text){const k=ttsKey(text);if(ttsCache.has(k))return ttsCache.get(k);const b=TTS.prov==='cartesia'?await ttsCartesia(text):await ttsGemini(text);if(ttsCache.size>400)ttsCache.clear();ttsCache.set(k,b);return b;}
+function trimSil(buf){const d=buf.getChannelData(0);let pk=0;for(let i=0;i<d.length;i++){const a=d[i]<0?-d[i]:d[i];if(a>pk)pk=a;}const th=Math.max(.004,pk*.02);
+  let a=0;while(a<d.length&&Math.abs(d[a])<th)a++;let b=d.length-1;while(b>a&&Math.abs(d[b])<th)b--;const pad=Math.round(buf.sampleRate*.04);a=Math.max(0,a-pad);b=Math.min(d.length-1,b+pad);return{d,a,b,sr:buf.sampleRate};}
+async function to48(buf){if(buf.sampleRate===48000&&buf.numberOfChannels===1)return buf.getChannelData(0);const oc=new OfflineAudioContext(1,Math.ceil(buf.duration*48000),48000);const s=oc.createBufferSource();s.buffer=buf;s.connect(oc.destination);s.start();return(await oc.startRendering()).getChannelData(0);}
+function ttsErr(e){const m=String(e&&e.message||e);
+  if(m==='NOKEY')return TTS.prov==='cartesia'?'আগে Cartesia API কী দিন।':'আগে Gemini API কী দিন (এই কার্ডে বা "খবর" ধাপের AI অংশে)।';
+  if(m==='BADKEY')return 'API কী ঠিক নেই বা মেয়াদ শেষ। নতুন কী দিন।';
+  if(m==='NOVOICE')return 'আগে একটা Cartesia ভয়েস বেছে নিন ("ভয়েস তালিকা আনুন")।';
+  if(m==='NET')return 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখুন। অফিস নেটওয়ার্কে আটকে থাকলে অন্য নেটওয়ার্কে চেষ্টা করুন।';
+  if(m==='CANCEL')return 'বাতিল করা হয়েছে।';return m;}
+async function ttsBuildAll(){
+  if(!$('#script').value.trim()){alert('আগে স্ক্রিপ্ট লিখুন।');return;}
+  if(!scenes.length)build(true);if(!scenes.length)return;
+  if(hasAudio&&!confirm('এখনকার ভয়েসটা বাদ দিয়ে AI দিয়ে নতুন ভয়েস বানাবেন?'))return;
+  pause();const n=scenes.length;ttsJob={cancel:false,label:''};ttsUI();
+  const parts=[];let done=0;const todo=scenes.filter(s=>!s.special&&ttsText(s.text)).length;
+  try{
+    for(let i=0;i<n;i++){const sc=scenes[i];if(sc.special){parts.push(null);continue;}const t=ttsText(sc.text);if(!t){parts.push(null);continue;}
+      ttsJob.label='দৃশ্য '+toBn(i+1)+'/'+toBn(n);ttsSay('🎙 AI ভয়েস তৈরি হচ্ছে… '+ttsJob.label+' ('+toBn(Math.round(done/todo*100))+'%)');
+      const buf=await ttsOne(t);parts.push(buf);done++;}
+    ttsSay('ভয়েসগুলো জোড়া লাগানো হচ্ছে…');
+    const sr=48000;const segs=[];const marks=[];let t=0;
+    for(let i=0;i<n;i++){const sc=scenes[i];marks.push(t);
+      if(!parts[i]){const L=sc.special?autoDur(sc):.8;segs.push(['sil',L]);t+=L;continue;}
+      const x=await to48(parts[i]);const tr=trimSil({getChannelData:()=>x,sampleRate:sr});const len=(tr.b-tr.a+1)/sr;segs.push(['clip',x.subarray(tr.a,tr.b+1)]);t+=len;
+      const nx=scenes[i+1];const gap=!nx?.5:(nx.special?.5:(nx.isChapter||sc.isChapter?+TTS.chGap||.6:+TTS.gap||.35));if(nx){segs.push(['sil',gap]);t+=gap;}}
+    const end=t;const out=new Float32Array(Math.ceil(end*sr)+sr);let o=0;
+    for(const s of segs){if(s[0]==='sil'){o+=Math.round(s[1]*sr);}else{out.set(s[1],o);o+=s[1].length;}}
+    const ab=new AudioBuffer({length:Math.max(1,Math.min(out.length,o+Math.round(.3*sr))),sampleRate:sr,numberOfChannels:1});ab.copyToChannel(out.subarray(0,ab.length),0);
+    const wav=toWav(ab);nextSrc='ai';
+    const d=await loadAudioBlob(wav);if(!d)throw new Error('তৈরি করা ভয়েস চালানো যাচ্ছে না।');
+    // exact timing: every scene starts where its own sentence starts
+    applyMarks(marks,end);
+    ttsSay('✔ AI ভয়েস তৈরি হয়েছে ('+fmtTime(end)+')। প্রতিটা দৃশ্য ঠিক নিজের বাক্যের সাথে মেলানো। "চালান" চেপে শুনুন।',true);
+    setStatus('✔ AI ভয়েস ('+(TTS.prov==='cartesia'?'Cartesia':'Gemini')+') বসানো হয়েছে, দৃশ্যের সাথে একদম মেলানো।',true);
+  }catch(e){console.warn('TTS',e);ttsSay('✖ '+ttsErr(e));}
+  finally{ttsJob=null;ttsUI();}}
+async function ttsSample(){const sc=scenes.find(s=>!s.special&&!s.isChapter&&ttsText(s.text));const t=sc?ttsText(sc.text):'আসসালামু আলাইকুম। আজকের প্রধান খবরগুলো দেখে নিন।';
+  ttsJob={cancel:false,label:'নমুনা'};ttsUI();ttsSay('নমুনা তৈরি হচ্ছে…');
+  try{const b=await ttsOne(t.slice(0,220));const w=toWav(b);const a=new Audio(URL.createObjectURL(w));a.play().catch(()=>{});ttsSay('▶ নমুনা বাজছে। পছন্দ হলে "পুরো স্ক্রিপ্টের ভয়েস বানান" চাপুন।',true);}
+  catch(e){ttsSay('✖ '+ttsErr(e));}finally{ttsJob=null;ttsUI();}}
+async function cartVoices(){ttsSay('ভয়েস তালিকা আনা হচ্ছে…');const sel=$('#ttsCVoice');
+  try{const get=async q=>{const r=await cartFetch('/voices?limit=100'+q);if(r.status===401||r.status===403)throw new Error('BADKEY');if(!r.ok)throw new Error('Cartesia: '+r.status);return(await r.json()).data||[];};
+    const mine=await get('&is_owner=true');let pub=[];try{pub=await get('');}catch(e){}
+    const opt=v=>{const o=D.createElement('option');o.value=v.id;o.textContent=v.name+(v.language?' ('+v.language+')':'');return o;};
+    sel.innerHTML='';const g1=D.createElement('optgroup');g1.label='আমার ভয়েস ('+toBn(mine.length)+')';mine.forEach(v=>g1.appendChild(opt(v)));sel.appendChild(g1);
+    const bn=pub.filter(v=>!v.is_owner&&v.language==='bn'),other=pub.filter(v=>!v.is_owner&&v.language!=='bn');
+    if(bn.length){const g=D.createElement('optgroup');g.label='বাংলা ভয়েস';bn.forEach(v=>g.appendChild(opt(v)));sel.appendChild(g);}
+    if(other.length){const g=D.createElement('optgroup');g.label='অন্যান্য ভয়েস';other.forEach(v=>g.appendChild(opt(v)));sel.appendChild(g);}
+    if(TTS.cVoice&&![...sel.options].some(o=>o.value===TTS.cVoice)){const o=D.createElement('option');o.value=TTS.cVoice;o.textContent=TTS.cVoiceName||TTS.cVoice;sel.prepend(o);}
+    if(TTS.cVoice)sel.value=TTS.cVoice;else if(sel.options.length){sel.selectedIndex=0;TTS.cVoice=sel.value;TTS.cVoiceName=sel.options[0].textContent;save();}
+    ttsSay('✔ '+toBn(mine.length)+'টা নিজের ভয়েস'+(pub.length?' আর '+toBn(pub.length)+'টা অন্যান্য':'')+' পাওয়া গেছে।',true);}
+  catch(e){ttsSay('✖ '+ttsErr(e));}}
+// UI
+const ttc=D.createElement('div');ttc.className='card';ttc.id='tfTTS';ttc.dataset.tfPlaced=1;
+ttc.innerHTML=`<h2>🤖 লেখা থেকে AI ভয়েস</h2>
+<p class="hint" style="margin:-4px 0 10px">স্ক্রিপ্টের প্রতিটা দৃশ্য আলাদা করে পড়ানো হয়, তাই ছবি আর কথা একদম ঠিক জায়গায় মিলে যায়।</p>
+<div class="segc" id="ttsProv"><button data-p="gemini">Gemini</button><button data-p="cartesia">Cartesia</button></div>
+<div id="ttsG">
+ <label>Gemini API কী <small class="keyst" id="gKeySt"></small><input type="password" id="ttsGKey" placeholder="AIza…" autocomplete="off"></label>
+ <div class="settings"><label>ভয়েস<select id="ttsGVoice"></select></label><label>পড়ার ভঙ্গি<select id="ttsGStyle"><option value="anchor">সংবাদ পাঠক</option><option value="calm">শান্ত ও স্বাভাবিক</option><option value="lively">প্রাণবন্ত</option><option value="none">কোনো নির্দেশ নয়</option></select></label>
+ <label style="grid-column:1/-1">মডেল (নাম বদলানো যায়)<input id="ttsGModel" list="ttsGModels"><datalist id="ttsGModels"><option value="gemini-3.1-flash-tts-preview"><option value="gemini-2.5-flash-preview-tts"><option value="gemini-2.5-pro-preview-tts"></datalist></label></div>
+</div>
+<div id="ttsC" class="hidden">
+ <label>Cartesia API কী <small class="keyst" id="cKeySt"></small><input type="password" id="ttsCKey" placeholder="sk_car_…" autocomplete="off"></label>
+ <label class="chk"><input type="checkbox" id="ttsRemember"> এই কম্পিউটারে কী মনে রাখবে (টিক না দিলে ব্রাউজার বন্ধ করলে মুছে যাবে)</label>
+ <div class="row" style="gap:8px;margin:8px 0"><button class="ghost small" id="ttsCList">🔄 ভয়েস তালিকা আনুন</button><button class="ghost small" id="ttsCDel">🗑 কী মুছুন</button></div>
+ <div class="settings"><label style="grid-column:1/-1">ভয়েস<select id="ttsCVoice"><option value="">— আগে "ভয়েস তালিকা আনুন" চাপুন —</option></select></label>
+ <label style="grid-column:1/-1">অথবা ভয়েস ID পেস্ট করুন<input id="ttsCVoiceId" placeholder="play.cartesia.ai থেকে ভয়েসের ID"></label>
+ <label>মডেল<select id="ttsCModel"><option value="sonic-3.5">sonic-3.5 (নতুন)</option><option value="sonic-3">sonic-3 (গতি/আবেগ বদলানো যায়)</option><option value="sonic-latest">sonic-latest</option></select></label>
+ <label>আবেগ<select id="ttsCEmotion"><option value="neutral">স্বাভাবিক</option><option value="calm">শান্ত</option><option value="content">সন্তুষ্ট</option><option value="sad">দুঃখী</option><option value="angry">রাগী</option></select></label>
+ <label style="grid-column:1/-1">গতি <b id="ttsCSpeedV"></b><input type="range" id="ttsCSpeed" min="0.6" max="1.5" step="0.05"></label></div>
+</div>
+<div class="settings" style="margin-top:8px"><label>বাক্যের মাঝে বিরতি<select id="ttsGap"><option value="0.2">ছোট</option><option value="0.35">স্বাভাবিক</option><option value="0.55">লম্বা</option></select></label>
+ <label>নতুন খবরের আগে বিরতি<select id="ttsChGap"><option value="0.4">ছোট</option><option value="0.6">স্বাভাবিক</option><option value="1">লম্বা</option></select></label></div>
+<div class="row" style="gap:8px;margin-top:12px"><button class="ghost" id="ttsSample">▶ নমুনা শুনুন</button><button class="red" id="ttsGo">🎙 পুরো স্ক্রিপ্টের ভয়েস বানান</button><button class="ghost hidden" id="ttsStop">✖ থামান</button></div>
+<div class="status hidden" id="ttsStatus"></div>
+<div class="hint" style="margin-top:8px">🔒 API কী শুধু আপনার এই ব্রাউজারে থাকে — প্রজেক্ট ফাইলে বা GitHub-এ কখনো যায় না। খরচ আপনার Gemini/Cartesia অ্যাকাউন্ট থেকে কাটবে।</div>`;
+{const vc=card('#audioFile');paneEl.voice.insertBefore(ttc,vc||paneEl.voice.children[1]||null);}
+$('#ttsGVoice').innerHTML=G_VOICES.map(([v,g,d])=>`<option value="${v}">${v} — ${g}, ${d}</option>`).join('');
+function ttsUI(){const busy=!!ttsJob;$('#ttsProv').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p===TTS.prov));
+  $('#ttsG').classList.toggle('hidden',TTS.prov!=='gemini');$('#ttsC').classList.toggle('hidden',TTS.prov!=='cartesia');
+  const gk=KS.get('tfx_gkey'),ck=KS.get('tfx_cartkey');$('#gKeySt').textContent=gk?'✔ দেওয়া আছে':'নেই';$('#cKeySt').textContent=ck?'✔ দেওয়া আছে':'নেই';
+  $('#ttsGo').disabled=busy;$('#ttsSample').disabled=busy;$('#ttsStop').classList.toggle('hidden',!busy);$('#ttsCSpeedV').textContent=toBn((+TTS.cSpeed).toFixed(2))+'x';}
+$('#ttsProv').querySelectorAll('button').forEach(b=>b.onclick=()=>{TTS.prov=b.dataset.p;save();ttsUI();});
+// keys: shown as dots, never echoed back into the box
+const keyBox=(id,k,also)=>{const e=$('#'+id);e.value='';e.placeholder=KS.get(k)?'•••••••• (দেওয়া আছে — বদলাতে নতুন কী পেস্ট করুন)':e.placeholder;
+  e.addEventListener('change',()=>{const v=e.value.trim();if(!v)return;if(/\s/.test(v)||v.length<20){alert('কীটা ঠিক মনে হচ্ছে না। পুরো কী কপি করে পেস্ট করুন।');return;}
+    KS.set(k,v,k==='tfx_gkey'?true:$('#ttsRemember').checked);if(also){const o=$('#'+also);if(o)o.value=v;}e.value='';e.placeholder='•••••••• (দেওয়া আছে)';ttsUI();ttsSay('✔ কী সেভ হয়েছে (শুধু এই ব্রাউজারে)।',true);});};
+keyBox('ttsGKey','tfx_gkey','gkey');keyBox('ttsCKey','tfx_cartkey');
+$('#ttsRemember').checked=(()=>{try{return !!localStorage.getItem('tfx_cartkey');}catch(e){return false;}})();
+$('#ttsRemember').onchange=e=>{const v=KS.get('tfx_cartkey');if(v)KS.set('tfx_cartkey',v,e.target.checked);};
+$('#ttsCDel').onclick=()=>{KS.del('tfx_cartkey');$('#ttsCKey').placeholder='sk_car_…';ttsUI();ttsSay('Cartesia কী মুছে ফেলা হয়েছে।',true);};
+const bindT=(id,k,num)=>{const e=$('#'+id);e.value=TTS[k];e.addEventListener(e.tagName==='SELECT'?'change':'input',()=>{TTS[k]=num?+e.value:e.value;save();ttsUI();});};
+bindT('ttsGVoice','gVoice');bindT('ttsGStyle','gStyle');bindT('ttsGModel','gModel');bindT('ttsCModel','cModel');bindT('ttsCEmotion','cEmotion');bindT('ttsCSpeed','cSpeed',true);bindT('ttsGap','gap',true);bindT('ttsChGap','chGap',true);
+if(TTS.cVoice){const o=D.createElement('option');o.value=TTS.cVoice;o.textContent=TTS.cVoiceName||TTS.cVoice;$('#ttsCVoice').prepend(o);$('#ttsCVoice').value=TTS.cVoice;}
+$('#ttsCVoice').onchange=e=>{TTS.cVoice=e.target.value;TTS.cVoiceName=(e.target.selectedOptions[0]||{}).textContent||'';$('#ttsCVoiceId').value='';save();};
+$('#ttsCVoiceId').addEventListener('change',e=>{const v=e.target.value.trim();if(!v)return;if(!/^[\w-]{8,80}$/.test(v)){alert('ভয়েস ID ঠিক মনে হচ্ছে না।');return;}TTS.cVoice=v;TTS.cVoiceName=v;const s=$('#ttsCVoice');if(![...s.options].some(o=>o.value===v)){const o=D.createElement('option');o.value=v;o.textContent=v;s.prepend(o);}s.value=v;save();});
+$('#ttsCList').onclick=cartVoices;$('#ttsGo').onclick=ttsBuildAll;$('#ttsSample').onclick=ttsSample;$('#ttsStop').onclick=()=>{if(ttsJob)ttsJob.cancel=true;};
+{const g=$('#gkey');if(g)g.addEventListener('change',()=>setTimeout(ttsUI,50));}
+ttsUI();
 
 sizeCv();chip();
 })();
