@@ -3903,7 +3903,7 @@ Reply with ONLY JSON:
 // ---------- net photos automatically ----------
 async function netAuto(){if(!settings.netAuto||!scenes.length)return;const key=($('#pexelsKey').value||'').trim();if(!key){setPx('নেট থেকে ছবি আনতে Pexels API কী দিন (ফ্রি)।');return;}
   const k=newsKey();if(settings.netFor===k)return;settings.netFor=k;save();try{await pexelsFetch();}catch(e){console.warn(e);}}
-$('#build').addEventListener('click',()=>setTimeout(netAuto,400));
+$('#build').addEventListener('click',()=>setTimeout(netAuto,400));window.tfNetAuto=()=>netAuto();
 {const _ad=aiDoAll;aiDoAll=async function(){await _ad.apply(this,arguments);setTimeout(netAuto,300);};}
 // ---------- new project = clean thumbnail too ----------
 {const _fs3=freshStart;freshStart=async function(){await _fs3.apply(this,arguments);try{await clearBg();}catch(e){}TH_.title='';TH_.sub='';TH_.ai=null;['thTitle','thSub'].forEach(id=>{const e=$('#'+id);if(e)e.value='';});settings.netFor='';save();thDraw();};
@@ -4105,5 +4105,172 @@ const NEWFX=[
 ];
 try{NEWFX.forEach(f=>FXV.push(f));}catch(e){console.warn('fx',e);}
 </script><!--/tf2-->
+<style id="tf3css">
+/* ===== economical writing: Gemini app / auto AI / read as-is ===== */
+.wrm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 10px}
+.wrm button{border:1.5px solid #ECE7DF;background:#fff;border-radius:16px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;cursor:pointer;color:#17171A;font-family:inherit;min-height:64px;justify-content:center}
+.wrm button b{font-size:14px;font-weight:600;line-height:1.3}.wrm button small{font-size:11.5px;color:#67635C;line-height:1.3}
+.wrm button.on{border-color:#E5391B;background:#FCE9E4}.wrm button.on b{color:#B42A12}
+.wrbox{background:#fff;border:1px solid #ECE7DF;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.wrstep{display:flex;gap:10px;align-items:flex-start}.wrstep .n{width:26px;height:26px;border-radius:13px;background:#17171A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;margin-top:1px}
+.wrstep b{display:block;font-size:15px;font-weight:600}.wrstep small{display:block;font-size:13px;color:#67635C;line-height:1.5}
+.wrbox textarea{width:100%;min-height:110px;border:1px solid #ECE7DF;border-radius:14px;padding:10px 12px;font-size:15px;line-height:1.55;font-family:inherit;background:#FCFBF8;box-sizing:border-box}
+.wrbtn{min-height:48px;border:0;border-radius:24px;background:#E5391B;color:#fff;font-size:15px;font-weight:600;font-family:inherit;padding:0 16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.wrbtn.sec{background:#fff;color:#17171A;border:1px solid #ECE7DF}.wrbtn:disabled{opacity:.5}
+.wrrow{display:flex;gap:8px}.wrrow>*{flex:1}
+.wrnote{font-size:13px;color:#67635C;line-height:1.55;margin:0}
+.wrkey{display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.45}.wrkey span{flex:1}
+.wrcur{font-size:13px;padding:8px 12px;border-radius:12px;background:#F3EFE8;color:#3C3A36;line-height:1.5}.wrcur.free{background:#E7F4EA;color:#1D6B33}
+details.wrhow{border:1px solid #ECE7DF;border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.7;background:#FCFBF8}details.wrhow summary{font-weight:600;cursor:pointer}
+details.wrhow ol{margin:6px 0 0;padding-left:20px}
+body.tf2 .wrm button{min-height:58px}
+#tfWR .wrbtn{background:#E5391B!important;color:#fff!important;border:0!important;border-radius:24px!important;min-height:46px!important;font-weight:600!important;width:100%!important;justify-content:center!important}
+#tfWR .wrbtn.sec{background:#fff!important;color:#17171A!important;border:1px solid #ECE7DF!important}
+#tfWR .wrm button{border-radius:16px!important}
+#tfWR label.wrkey{display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important;color:#17171A!important;font-size:14px!important;margin:0!important}
+#tfWR label.wrkey input[type=checkbox]:not(.sw){width:22px!important;height:22px!important;min-height:0!important;flex-shrink:0;accent-color:#E5391B}
+</style>
+<script id="tf3">/* ===================================================================
+   TF News Studio — economical writing (web + mobile)
+   1) Gemini app: news + instructions copied in one tap, Gemini opens, paste the answer back (free with Gemini Pro)
+   2) Auto AI with an API key (tip: a free Gemini key = no cost within the daily limit)
+   3) Read as-is: the news text itself becomes the script (no AI at all)
+   =================================================================== */
+(function TF3(){
+if(typeof LIVE!=='undefined'&&LIVE)return;
+const D=document,MOB=!!D.getElementById('s-home'),APP=!!(window.Android&&window.Android.saveBegin);
+const WR=settings.wr=Object.assign({mode:'app',freeKey:true},settings.wr||{});
+const ic=n=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="${(typeof ICONS!=='undefined'&&ICONS[n])||''}"/></svg>`;
+/* ---------- clipboard + opening Gemini ---------- */
+async function copyOut(t){if(APP&&Android.copyText){try{if(Android.copyText(t))return true;}catch(e){}}
+  try{await navigator.clipboard.writeText(t);return true;}catch(e){}
+  const ta=D.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:-9999px;top:0';D.body.appendChild(ta);ta.select();let ok=false;try{ok=D.execCommand('copy');}catch(e){}ta.remove();return ok;}
+async function readIn(){if(APP&&Android.readClipboard){try{return Android.readClipboard()||'';}catch(e){}}try{return await navigator.clipboard.readText();}catch(e){return null;}}
+function openGemini(){if(APP&&Android.openGemini){try{Android.openGemini();return;}catch(e){}}window.open('https://gemini.google.com/app','_blank','noopener');}
+/* ---------- read as-is: news text → script (every sentence kept) ---------- */
+function rawToScript(raw){
+  let t=String(raw||'').replace(/\r/g,'').replace(/^নিচের [০-৯\d]+টি খবর দিয়ে[^\n]*\n+/,'');
+  const out=[];
+  t.split(/\n\s*-{3,}\s*\n/).forEach(p=>{
+    const lines=p.split('\n').map(x=>x.trim()).filter(Boolean).filter(x=>!/^\(?\s*সূত্র\s*[:：]/.test(x)&&!/^https?:\/\/\S+$/.test(x));
+    if(!lines.length)return;
+    let title=lines[0].replace(/^খবর\s*[০-৯\d]+\s*[:：]\s*/,'').replace(/^#+\s*/,'');let body=lines.slice(1).join(' ');
+    if(!body||title.length>120){const s=(title+' '+body).replace(/\s+/g,' ').trim().split(/(?<=[।!?])\s+/);title=s[0];body=s.slice(1).join(' ');}
+    const sents=body.replace(/\s+/g,' ').split(/(?<=[।!?])\s+/).map(x=>x.trim()).filter(x=>x.length>1);
+    const sc=[];let cur='',k=0;sents.forEach(s=>{if(cur&&(k>=2||(cur+' '+s).length>170)){sc.push(cur);cur=s;k=1;}else{cur=cur?cur+' '+s:s;k++;}});if(cur)sc.push(cur);
+    out.push('# '+title.replace(/[।.]\s*$/,'')+'\n\n'+(sc.join('\n\n')||title));});
+  return out.join('\n\n');}
+window.tfRawToScript=rawToScript;
+/* ---------- the prompt for the Gemini app ---------- */
+function appPrompt(raw){return buildScriptPrompt(raw)+'\n\nIMPORTANT: Reply with ONLY the JSON object above inside a single ```json code block. No explanation before or after it.';}
+/* ---------- status line ---------- */
+function say(s,ok){if(typeof setAI==='function')setAI(s,ok);}
+function afterScript(msg){
+  try{if(window.tfNetAuto)window.tfNetAuto();}catch(e){}
+  say(msg,true);
+  if(MOB){if(scenes.length&&typeof go==='function')setTimeout(()=>go('preview'),700);}
+  else{const p=D.getElementById('tfPrev');if(p&&scenes.length)setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'start'}),300);}}
+function useRaw(){const raw=$('#rawText').value.trim();if(!raw){alert('আগে খবর বা লেখা পেস্ট করুন।');return;}
+  const s=rawToScript(raw);if(!s.trim()){alert('লেখাটা থেকে স্ক্রিপ্ট বানানো গেল না।');return;}
+  $('#script').value=s;$('#script').dispatchEvent(new Event('input'));build(false);try{save();}catch(e){}
+  afterScript('✔ খবর হুবহু স্ক্রিপ্টে বসানো হয়েছে — '+toBn(scenes.filter(x=>!x.special).length)+'টা দৃশ্য। কোনো AI খরচ হয়নি।');}
+async function appCopy(){const raw=$('#rawText').value.trim();if(!raw){alert('আগে খবর বা লেখা পেস্ট করুন (বা "খবর" থেকে আনুন)।');return;}
+  const ok=await copyOut(appPrompt(raw));
+  if(!ok){const a=$('#wrAns');a.value=appPrompt(raw);a.select();say('স্বয়ংক্রিয় কপি হয়নি — নিচের বক্সের লেখা নিজে কপি করে জেমিনিতে দিন, তারপর বক্স খালি করে উত্তর পেস্ট করুন।');return;}
+  say('✔ খবর আর নির্দেশনা কপি হয়েছে। জেমিনিতে '+(MOB?'লম্বা চাপ দিয়ে "Paste"':'Ctrl+V')+' করে পাঠান → উত্তরের নিচে "কপি" চাপুন → এখানে ফিরে "পেস্ট" চাপুন।',true);
+  setTimeout(openGemini,MOB?500:150);}
+async function appPaste(){const t=await readIn();if(t==null){alert('পেস্ট করার অনুমতি পাওয়া যায়নি। বক্সে চেপে ধরে (বা Ctrl+V) নিজে পেস্ট করুন।');$('#wrAns').focus();return;}
+  if(!t.trim()){alert('ক্লিপবোর্ড খালি। জেমিনির উত্তরের নিচে "কপি" চেপে আবার চেষ্টা করুন।');return;}
+  if(t.includes('Reply with ONLY valid JSON')&&t.includes('RAW TEXT:')){alert('এটা তো আমাদের নির্দেশনা — জেমিনির উত্তরটা কপি করুন।');return;}
+  $('#wrAns').value=t;wrUI();}
+function appApply(){const v=$('#wrAns').value.trim();if(!v){appCopy();return;}
+  if(v.includes('RAW TEXT:')&&v.includes('Reply with ONLY')){alert('বক্সে এখনো নির্দেশনা রয়ে গেছে। বক্স মুছে জেমিনির উত্তর পেস্ট করুন।');return;}
+  try{const r=applyAnyText(v);if(r!=='script'&&!String(r).startsWith('plan'))throw new Error('উত্তরটা বোঝা যায়নি');
+    $('#wrAns').value='';wrUI();try{save();}catch(e){}
+    afterScript('✔ জেমিনির লেখা বসানো হয়েছে — '+toBn(scenes.filter(x=>!x.special).length)+'টা দৃশ্য। কোনো API খরচ হয়নি।');}
+  catch(e){say('✖ '+(e.message||e)+'। জেমিনির পুরো উত্তর (```json থেকে শেষ পর্যন্ত) কপি করেছেন কিনা দেখুন।');}}
+/* ---------- free Gemini key helpers ---------- */
+function toGemini(){const seg=D.querySelector('#aiProvSeg [data-p=gemini]');if(seg)seg.click();else{const r=D.querySelector('input[name=prov][value=gemini]');if(r){r.checked=true;r.dispatchEvent(new Event('change'));if(r.onchange)r.onchange();}}
+  if(/pro/i.test(settings.gmodel||'')){settings.gmodel='gemini-3.6-flash';const g=$('#gmodel');if(g)g.value=settings.gmodel;}
+  try{if(typeof syncProv==='function')syncProv();}catch(e){}try{save();}catch(e){}setTimeout(wrUI,60);}
+function curTxt(){const gem=settings.provider==='gemini';const hasK=gem?!!($('#gkey')||{}).value:!!($('#ckey')||{}).value;
+  if(!hasK)return['এখন: '+(gem?'Gemini':'Claude')+' — কোনো কী দেওয়া নেই। '+(MOB?'সেটিংস › AI-তে':'নিচের ঘরে')+' কী দিন।',false];
+  if(gem&&WR.freeKey)return['এখন: Gemini ('+settings.gmodel+') — ফ্রি কী, দৈনিক সীমার মধ্যে কোনো খরচ নেই।',true];
+  return['এখন: '+(gem?'Gemini ('+settings.gmodel+')':'Claude ('+String(settings.cmodel||'').replace('claude-','')+')')+' — প্রতিবার টাকা কাটবে।',false];}
+// cost line in the AI status: free key = no cost
+{const _s=setAI;setAI=function(s,ok){if(settings.provider==='gemini'&&WR.freeKey&&typeof s==='string')s=s.replace(/খরচ আনুমানিক[^।]*?\)/,'ফ্রি Gemini কী — কোনো খরচ নেই');return _s(s,ok);};}
+// when the free daily limit is used up: offer the Gemini app instead
+{const _ad=aiDoAll;aiDoAll=async function(){await _ad.apply(this,arguments);const t=($('#aistatus')||{}).textContent||'';
+  if(/ফ্রি সীমা শেষ|quota|exhausted|ক্রেডিট নেই/i.test(t)){setTimeout(()=>{if(confirm('AI-এর '+(/ক্রেডিট/.test(t)?'ক্রেডিট':'আজকের ফ্রি সীমা')+' শেষ।\n\nজেমিনি অ্যাপ দিয়ে (আপনার প্রো সাবস্ক্রিপশনে, ফ্রি) সাজাবেন?')){setMode('app');appCopy();}},200);}};}
+/* ---------- UI ---------- */
+const box=D.createElement('div');box.id='tfWR';
+box.innerHTML=`${MOB?'<h2 class="sec">কীভাবে সাজাবে</h2>':''}
+<div class="wrm" id="wrMode"><button data-m="app"><b>জেমিনি অ্যাপে</b><small>ফ্রি · আপনার প্রো</small></button><button data-m="api"><b>অটো AI</b><small>API কী দিয়ে</small></button><button data-m="raw"><b>হুবহু</b><small>AI ছাড়া</small></button></div>
+<div class="wrbox" id="wrApp">
+ <div class="wrstep"><span class="n">১</span><div><b>কপি করে জেমিনি খুলুন</b><small>খবর আর কী করতে হবে — দুটোই একসাথে কপি হবে। জেমিনিতে ${MOB?'লম্বা চাপ দিয়ে "Paste"':'Ctrl+V'} করে পাঠান।</small></div></div>
+ <button class="wrbtn" id="wrCopy">${ic('sparkles')}কপি করে জেমিনি খুলুন</button>
+ <div class="wrstep"><span class="n">২</span><div><b>জেমিনির উত্তর এখানে দিন</b><small>উত্তরের নিচের "কপি" বোতাম চাপুন, এখানে ফিরে "পেস্ট" চাপুন।</small></div></div>
+ <textarea id="wrAns" rows="4" placeholder="জেমিনির পুরো উত্তর এখানে পেস্ট হবে"></textarea>
+ <div class="wrrow"><button class="wrbtn sec" id="wrPaste">📋 পেস্ট</button><button class="wrbtn sec" id="wrClear">মুছুন</button></div>
+ <div class="wrstep"><span class="n">৩</span><div><b>"${MOB?'উত্তর বসিয়ে দৃশ্য বানান':'জেমিনির লেখা বসান'}" চাপুন</b><small>এই লেখা থেকেই দৃশ্য, দৈর্ঘ্য আর টিকার সাজানো হবে — তারপর ভয়েস ধাপে Cartesia দিয়ে পড়ান।</small></div></div>
+ ${MOB?'':'<button class="wrbtn" id="wrApplyW">জেমিনির লেখা বসান</button>'}
+</div>
+<div class="wrbox" id="wrApi">
+ <div class="wrcur" id="wrCur"></div>
+ <label class="wrkey"><span><b>আমার Gemini কী ফ্রি</b><br><small style="color:#67635C">বিলিং ছাড়া প্রজেক্টের কী — খরচ দেখাবে না</small></span><input type="checkbox" id="wrFree" ${MOB?'class="sw"':''}></label>
+ <button class="wrbtn sec" id="wrToGem">ফ্রি Gemini-তে বদলান</button>
+ <details class="wrhow"><summary>ফ্রি Gemini কী নেওয়ার নিয়ম (একবারই করতে হবে)</summary><ol>
+  <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a> খুলুন (আপনার Gmail দিয়ে)।</li>
+  <li><b>Create API key</b> চাপুন → <b>Create API key in new project</b> বেছে নিন।</li>
+  <li>এই নতুন প্রজেক্টে <b>বিলিং / কার্ড যোগ করবেন না</b> — তাহলেই ফ্রি থাকবে (দৈনিক একটা সীমা আছে)।</li>
+  <li>কী কপি করে ${MOB?'সেটিংস › AI':'এই অংশের Gemini'} কী-র ঘরে দিন, "কোন AI" = Gemini।</li></ol>
+  <p class="wrnote" style="margin-top:6px">ফ্রিতে Flash মডেল চলে (Pro চলে না)। ফ্রি স্তরে Google লেখা দেখে মডেল উন্নত করতে পারে — খবর এমনিতেই প্রকাশ্য, তাই সমস্যা নেই; ব্যক্তিগত কিছু দেবেন না। সীমা শেষ হলে অ্যাপ নিজেই জেমিনি অ্যাপে করার কথা বলবে।</p></details>
+</div>
+<div class="wrbox" id="wrRaw">
+ <p class="wrnote"><b style="color:#17171A">খবরে যা লেখা আছে, হুবহু তাই পড়া হবে।</b> শিরোনাম আলাদা অংশ হবে, প্রতি ১-২ বাক্যে একটা দৃশ্য। কোনো AI লাগে না, কোনো খরচ নেই। দৈর্ঘ্য খবরের লেখা অনুযায়ী।</p>
+ ${MOB?'':'<button class="wrbtn" id="wrRawW">হুবহু স্ক্রিপ্ট বানান</button>'}
+</div>`;
+// place it
+let apiOnly=[];
+if(MOB){const opt=D.querySelector('#modeAi .group');(opt||$('#aistatus')).after(box);
+  const fr=$('#copyScriptPrompt')&&$('#copyScriptPrompt').closest('details');if(fr)fr.classList.add('hidden');
+  const aiRow=$('#aiName')&&$('#aiName').closest('.row');if(aiRow)apiOnly.push(aiRow);}
+else{const sec=$('#aiAll').closest('.sx');const body=sec?sec.querySelector('.sxb'):null;
+  if(sec){const h=sec.querySelector('.sxh h3');if(h)h.textContent='লেখা সাজান';const p=sec.querySelector('.sxh p');if(p)p.textContent='কাঁচা খবর থেকে ছোট, পরিষ্কার, পড়ার উপযোগী স্ক্রিপ্ট — তিনভাবে করা যায়।';}
+  if(body){body.insertBefore(box,body.firstChild);
+    const brow=$('#aiAll').closest('.brow');
+    body.querySelectorAll('details.more').forEach(d=>{if(d.contains($('#copyScriptPrompt')))d.classList.add('hidden');});
+    $('#wrApi').appendChild($('#aiProvSeg')||D.createElement('span'));[$('#provC'),$('#provG')].forEach(e=>{if(e)$('#wrApi').appendChild(e);});if(brow)$('#wrApi').appendChild(brow);}}
+const gm=$('#gmodels');if(gm&&!gm.querySelector('option[value="gemini-3.8-flash"]')){const o=D.createElement('option');o.value='gemini-3.8-flash';gm.insertBefore(o,gm.firstChild);}
+// main button behaviour per mode
+const AB=$('#aiAll');const apiClick=AB.onclick;
+const LBL={app:'উত্তর বসিয়ে দৃশ্য বানান',api:'স্ক্রিপ্ট ও দৃশ্য সাজান',raw:'হুবহু পড়ে দৃশ্য বানান'};
+function setMode(m){WR.mode=m;try{save();}catch(e){}wrUI();}
+function wrUI(){const m=WR.mode;D.querySelectorAll('#wrMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  $('#wrApp').classList.toggle('hidden',m!=='app');$('#wrApi').classList.toggle('hidden',m!=='api');$('#wrRaw').classList.toggle('hidden',m!=='raw');
+  apiOnly.forEach(e=>e.classList.toggle('hidden',m!=='api'));
+  if(MOB){const has=!!$('#wrAns').value.trim();AB.innerHTML='<svg class="i"><use href="#i-sparkles"/></svg> '+(m==='app'&&!has?'কপি করে জেমিনি খুলুন':LBL[m]);}
+  const c=curTxt();const cu=$('#wrCur');cu.textContent=c[0];cu.classList.toggle('free',c[1]);$('#wrFree').checked=!!WR.freeKey;
+  $('#wrToGem').classList.toggle('hidden',settings.provider==='gemini'&&!/pro/i.test(settings.gmodel||''));}
+window.tfWrUI=wrUI;
+D.querySelectorAll('#wrMode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+$('#wrCopy').onclick=appCopy;$('#wrPaste').onclick=appPaste;$('#wrClear').onclick=()=>{$('#wrAns').value='';wrUI();};$('#wrAns').addEventListener('input',wrUI);
+$('#wrFree').onchange=e=>{WR.freeKey=e.target.checked;try{save();}catch(er){}wrUI();};$('#wrToGem').onclick=toGemini;
+if(!MOB){$('#wrApplyW').onclick=appApply;$('#wrRawW').onclick=useRaw;}
+AB.onclick=async function(e){if(WR.mode==='raw')return useRaw();if(WR.mode==='app')return appApply();return apiClick?apiClick.call(this,e):aiDoAll();};
+['gkey','ckey','gmodel','cmodel'].forEach(id=>{const e=$('#'+id);if(e)e.addEventListener('change',()=>setTimeout(wrUI,50));});
+D.querySelectorAll('input[name=prov],.provb,#aiProvSeg button').forEach(e=>e.addEventListener('click',()=>setTimeout(wrUI,80)));
+// news import: in Gemini-app / as-is modes keep the raw news (no "API key missing" detour)
+if(typeof nwUse==='function'){const _nu=nwUse;nwUse=async function(list){const m=WR.mode;let quiet=null;
+  if(m!=='api'){const a=window.alert;quiet=a;window.alert=function(msg){if(/খবর বসানো হয়েছে/.test(String(msg)))return;return a.apply(window,arguments);};}
+  let r;try{r=await _nu.apply(this,arguments);}finally{if(quiet)setTimeout(()=>{window.alert=quiet;},2500);}
+  if(r!==false&&m!=='api'){const cm=D.querySelector('#createMode [data-m=ai]');if(cm)cm.click();
+    if(!MOB&&typeof window.tfShowPane==='function')window.tfShowPane('news');
+    say(m==='app'?'✔ খবর বসানো হয়েছে। এখন "কপি করে জেমিনি খুলুন" চাপুন।':'✔ খবর বসানো হয়েছে। "হুবহু পড়ে দৃশ্য বানান" চাপুন।',true);}
+  return r;};}
+wrUI();
+})();
+</script><!--/tf3-->
+
 </body>
 </html>

@@ -2,6 +2,9 @@ package com.tfnews.studio;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -418,6 +421,64 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String appVersion() {
             return Updater.currentName(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public boolean copyText(final String t) {
+            final boolean[] ok = {false};
+            final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+            runOnUiThread(() -> {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    cm.setPrimaryClip(ClipData.newPlainText("TF News", t));
+                    ok[0] = true;
+                } catch (Exception e) {
+                    ok[0] = false;
+                }
+                done.countDown();
+            });
+            try { done.await(3, java.util.concurrent.TimeUnit.SECONDS); } catch (Exception e) { }
+            return ok[0];
+        }
+
+        @JavascriptInterface
+        public String readClipboard() {
+            final String[] out = {""};
+            final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+            runOnUiThread(() -> {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData c = cm.getPrimaryClip();
+                    if (c != null && c.getItemCount() > 0) {
+                        CharSequence x = c.getItemAt(0).coerceToText(MainActivity.this);
+                        out[0] = x == null ? "" : x.toString();
+                    }
+                } catch (Exception e) {
+                    out[0] = "";
+                }
+                done.countDown();
+            });
+            try { done.await(3, java.util.concurrent.TimeUnit.SECONDS); } catch (Exception e) { }
+            return out[0];
+        }
+
+        @JavascriptInterface
+        public void openGemini() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = getPackageManager().getLaunchIntentForPackage("com.google.android.apps.bard");
+                    if (i != null) {
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                        return;
+                    }
+                } catch (Exception e) { }
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://gemini.google.com/app")));
+                } catch (Exception e) {
+                    toast("জেমিনি খোলা যায়নি");
+                }
+            });
         }
 
         @JavascriptInterface
