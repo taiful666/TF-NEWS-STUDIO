@@ -330,6 +330,23 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void shareWithText(final String caption) {
+            runOnUiThread(() -> {
+                if (lastUri == null) return;
+                Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType(tmpMime);
+                i.putExtra(Intent.EXTRA_STREAM, lastUri);
+                if (caption != null && caption.length() > 0) i.putExtra(Intent.EXTRA_TEXT, caption);
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                try {
+                    startActivity(Intent.createChooser(i, "শেয়ার করুন (ক্যাপশন কপি করা আছে)"));
+                } catch (Exception e) {
+                    toast("শেয়ার করা যায়নি");
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void share() {
             runOnUiThread(() -> {
                 if (lastUri == null) return;

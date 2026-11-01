@@ -4333,5 +4333,70 @@ try{window.tfWrUI&&window.tfWrUI();}catch(e){}
 })();
 </script><!--/tf5-->
 
+<style id="tf6css">
+.capbox textarea{width:100%;min-height:150px;border:1px solid #ECE7DF;border-radius:14px;padding:10px 12px;font-size:15px;line-height:1.6;font-family:inherit;background:#FCFBF8;box-sizing:border-box}
+.caprow{display:flex;gap:8px;margin-top:8px}.caprow>*{flex:1}
+#tfCap .capb{min-height:44px;border-radius:22px;border:1px solid #ECE7DF;background:#fff;color:#17171A;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 12px}
+#tfCap .capb.pri{background:#E5391B;border-color:#E5391B;color:#fff}
+.capok{font-size:13px;color:#1D6B33;margin-top:8px;line-height:1.5}
+</style>
+<script id="tf6">/* ===================================================================
+   TF News Studio — ready-to-paste caption for Facebook / YouTube
+   AI (Gemini app / API) writes it with the script; otherwise it is made from the news itself.
+   Copied automatically when the video is saved and when "share" is pressed.
+   =================================================================== */
+(function TF6(){
+if(typeof LIVE!=='undefined'&&LIVE)return;
+const D=document,MOB=!!D.getElementById('s-home'),APP=!!(window.Android&&window.Android.saveBegin);
+const cl=s=>String(s||'').replace(/[*#]/g,'').replace(/\s+/g,' ').trim();
+const isHead=s=>typeof isHeadSc==='function'&&isHeadSc(s);
+function key(){const c=scenes.find(s=>!s.special&&!s.isChapter&&!s.headBlock);return cl(c&&c.text).slice(0,60);}
+function tag(s){return '#'+cl(s).replace(/[^ঀ-৿A-Za-z0-9 ]/g,'').trim().split(' ').slice(0,3).join('_');}
+function localCaption(){
+  const ch=scenes.filter(s=>s.isChapter&&!s.special&&!isHead(s)).map(s=>cl(s.text)).filter(Boolean);
+  const body=scenes.filter(s=>!s.special&&!s.isChapter&&!s.headBlock).map(s=>cl(s.text));
+  const th=settings.th&&settings.th.ai;const main=cl((th&&th.main)||ch[0]||body[0]||'আজকের খবর');
+  const out=['🔴 '+((ch.length>1&&!(th&&th.main))?'এই মুহূর্তের প্রধান খবরগুলো':main)];
+  if(ch.length>1){out.push('');ch.forEach((h,i)=>out.push(['১️⃣','২️⃣','৩️⃣','৪️⃣','৫️⃣','৬️⃣','৭️⃣','৮️⃣'][i]?(['১','২','৩','৪','৫','৬','৭','৮'][i]+'. '+h):'• '+h));}
+  else{const s=body.slice(0,2).join(' ');if(s){out.push('');out.push(shortText(s,220));}}
+  out.push('');out.push('বিস্তারিত দেখুন ভিডিওতে 👆 নিয়মিত খবর পেতে পেজটি ফলো করুন।');
+  const tags=new Set(['#খবর','#বাংলা_খবর','#BanglaNews']);if(settings.brand)tags.add('#'+cl(settings.brand).replace(/\s+/g,''));
+  ch.slice(0,3).forEach(h=>{const w=h.split(' ').filter(x=>x.length>2)[0];if(w)tags.add('#'+w.replace(/[^ঀ-৿A-Za-z0-9]/g,''));});
+  out.push('');out.push([...tags].filter(t=>t.length>1).join(' '));return out.join('\n');}
+function caption(){const c=settings.cap;if(c&&c.text&&c.key===key())return c.text;return localCaption();}
+// AI writes the caption together with the script
+{const _bp=buildScriptPrompt;buildScriptPrompt=function(raw){let p=_bp(raw);
+  p=p.replace('RULES:','RULES:\n- Also write "caption": a ready-to-post Facebook/YouTube caption in Bangla — 1 catchy first line (faithful to the facts, no fake clickbait), then 2-4 short lines with the key facts (one line per story for a bulletin), then a line inviting people to follow the page, then 5-8 relevant hashtags. Put it in the JSON as "caption":"..." (use \\n for new lines).');return p;};}
+{const _as=applyScriptObj;applyScriptObj=function(j){const r=_as.apply(this,arguments);try{if(j&&typeof j.caption==='string'&&j.caption.trim()){setTimeout(()=>{settings.cap={text:j.caption.trim(),key:key()};try{save();}catch(e){}capUI();},250);}}catch(e){}return r;};}
+// copy
+async function copyCap(t){t=t==null?$('#capText').value:t;
+  if(APP&&Android.copyText){try{if(Android.copyText(t))return true;}catch(e){}}try{await navigator.clipboard.writeText(t);return true;}catch(e){}
+  const ta=D.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:-9999px';D.body.appendChild(ta);ta.select();let ok=false;try{ok=D.execCommand('copy');}catch(e){}ta.remove();return ok;}
+/* ---------- UI ---------- */
+const box=D.createElement('div');box.id='tfCap';
+box.innerHTML=(MOB?'<h2 class="sec">পোস্টের ক্যাপশন</h2><div class="group"><div class="row col capbox">':'<div class="capbox">')+
+ `<textarea id="capText" rows="7" aria-label="ক্যাপশন"></textarea>
+ <div class="caprow"><button class="capb pri" id="capCopy">📋 ক্যাপশন কপি</button><button class="capb" id="capNew">↻ খবর থেকে নতুন</button></div>
+ <div class="capok hidden" id="capOk"></div>`+(MOB?'</div></div><p class="hint">ভিডিও সেভ হলে আর "শেয়ার" চাপলে ক্যাপশন নিজে থেকেই কপি হয়ে থাকবে — Facebook/YouTube-এ লেখার ঘরে শুধু পেস্ট করুন। চাইলে এখানে বদলে নিন।</p>':'</div>');
+if(MOB){const g=$('#exThCv')&&$('#exThCv').closest('.group');(g||D.querySelector('#s-export .scroll .group')).after(box);}
+else{const pane=$('#thDl')&&$('#thDl').closest('.tfPane');if(pane){const s=D.createElement('section');s.className='sx';s.innerHTML='<div class="sxh"><h3>পোস্টের ক্যাপশন</h3><p>Facebook/YouTube-এ ভিডিওর সাথে দেওয়ার লেখা — কপি করে পেস্ট করুন।</p></div><div class="sxb"></div>';s.querySelector('.sxb').appendChild(box);const foot=pane.querySelector('.pfoot');pane.insertBefore(s,foot||null);}else D.body.appendChild(box);}
+function capUI(){const t=$('#capText');if(D.activeElement===t)return;t.value=caption();}
+$('#capText').addEventListener('input',e=>{settings.cap={text:e.target.value,key:key()};try{save();}catch(er){}});
+$('#capNew').onclick=()=>{settings.cap=null;try{save();}catch(e){}$('#capText').value=localCaption();};
+const say=m=>{const o=$('#capOk');o.textContent=m;o.classList.remove('hidden');clearTimeout(o._t);o._t=setTimeout(()=>o.classList.add('hidden'),4000);};
+$('#capCopy').onclick=async()=>{say(await copyCap()?'✔ ক্যাপশন কপি হয়েছে — পোস্টের লেখার ঘরে পেস্ট করুন।':'কপি হয়নি — লেখাটা চেপে ধরে নিজে কপি করুন।');};
+setInterval(()=>{if(!MOB||D.querySelector('#s-export.on'))capUI();},3000);setTimeout(capUI,800);
+if(MOB&&typeof go==='function'){const _go=go;go=function(id,push){_go(id,push);if(id==='export')setTimeout(capUI,40);};}
+/* ---------- phone: copy on save, share with caption ---------- */
+if(MOB){
+  const done=$('#saveDone');
+  if(done){const cb=D.createElement('button');cb.className='btn sec';cb.id='saveCap';cb.style.cssText='background:#23252C;color:#fff;border:0';cb.textContent='📋 ক্যাপশন আবার কপি';done.insertBefore(cb,$('#saveOk'));
+    const note=D.createElement('div');note.id='saveCapNote';note.style.cssText='font-size:14px;opacity:.8;text-align:center;line-height:1.5;margin-bottom:4px';done.insertBefore(note,done.firstChild);
+    cb.onclick=async()=>{note.textContent=await copyCap(caption())?'✔ ক্যাপশন কপি হয়েছে':'কপি হয়নি';};
+    new MutationObserver(async()=>{if(!done.classList.contains('hidden')&&!done._c){done._c=1;const ok=await copyCap(caption());note.textContent=ok?'✔ ক্যাপশনও কপি হয়ে আছে — শেয়ার করে লেখার ঘরে পেস্ট করুন':'';}if(done.classList.contains('hidden'))done._c=0;}).observe(done,{attributes:true,attributeFilter:['class']});}
+  const sb=$('#shareBtn');if(sb)sb.onclick=async()=>{const c=caption();await copyCap(c);try{if(Android.shareWithText)Android.shareWithText(c);else Android.share();}catch(e){try{Android.share();}catch(e2){}}};}
+})();
+</script><!--/tf6-->
+
 </body>
 </html>
