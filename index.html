@@ -1202,8 +1202,8 @@ function newsDesk(cx,top,w,s=1){
   const g=ctx.createLinearGradient(0,top,0,top+h);g.addColorStop(0,'rgba(255,255,255,.10)');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fill();
   rect(cx-w/2-10,top-16*s,w+20,20*s,'#E7E5E0');rect(cx-w/2-10,top+4*s,w+20,4*s,'rgba(0,0,0,.4)');
   rect(cx-w/2+50*s,top+52*s,w-100*s,9*s,T_.stripe);
-  const by=top+118*s;if(logoImg&&logoImg.naturalWidth){const lh=86*s,lw=lh*logoImg.naturalWidth/logoImg.naturalHeight;rr(cx-lw/2-14,by-lh/2-10,lw+28,lh+20,8,'rgba(255,255,255,.95)');ctx.drawImage(logoImg,cx-lw/2,by-lh/2,lw,lh);}
-  else if(settings.brand){const fs=fitSize(settings.brand,w*.6,64*s);text(settings.brand,cx,by+fs*.35,fs,'#fff','center');}
+  const by=top+94*s;if(logoImg&&logoImg.naturalWidth){const lh=58*s,lw=lh*logoImg.naturalWidth/logoImg.naturalHeight;rr(cx-lw/2-14,by-lh/2-10,lw+28,lh+20,8,'rgba(255,255,255,.95)');ctx.drawImage(logoImg,cx-lw/2,by-lh/2,lw,lh);}
+  else if(settings.brand){const fs=fitSize(settings.brand,w*.5,44*s);text(settings.brand,cx,by+fs*.35,fs,'#fff','center');}
 }
 function screenFrame(x,y,w,h,p,label,sc,t){
   if(p<=0)return;ctx.save();const c=back(p);ctx.translate(x+w/2,y+h/2);ctx.scale(c,c);ctx.translate(-x-w/2,-y-h/2);
@@ -1698,15 +1698,39 @@ async function pexOne(q,key){
   const b=await(await fetch(src)).blob();const f=new File([b],q+(vid?'.mp4':'.jpg'),{type:b.type||(vid?'video/mp4':'image/jpeg')});
   await addGalleryFiles([f],{query:q,credit});return{idx:GALLERY.length,credit};
 }
+/* ---- free photo sources (no API key): Wikimedia Commons, then Openverse ---- */
+const stripTags=h=>String(h||'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+async function blobOK(u){const r=await fetch(u,{mode:'cors'});if(!r.ok)throw new Error('img '+r.status);const b=await r.blob();if(!/^image\//.test(b.type)||b.size<15000)throw new Error('small');return b;}
+async function commonsOne(q){
+  const u='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20&gsrsearch='+encodeURIComponent(q+' filetype:bitmap')+'&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=1600';
+  const r=await fetch(u);if(!r.ok)throw new Error('commons '+r.status);const j=await r.json();
+  const pages=Object.values((j.query&&j.query.pages)||{}).sort((a,b)=>(a.index||0)-(b.index||0));
+  const ok=pages.map(pg=>pg.imageinfo&&pg.imageinfo[0]).filter(ii=>ii&&/jpeg|png|webp/.test(ii.mime||'')&&ii.width>=900&&ii.width>=ii.height*1.15&&ii.thumburl);
+  if(!ok.length)return null;
+  for(const ii of ok.slice(0,4).sort(()=>Math.random()-.5)){try{const b=await blobOK(ii.thumburl);const m=ii.extmetadata||{};
+    const who=stripTags(m.Artist&&m.Artist.value).slice(0,40)||'Wikimedia Commons';const lic=stripTags(m.LicenseShortName&&m.LicenseShortName.value);
+    return{blob:b,credit:'Wikimedia / '+who+(lic?' ('+lic+')':'')};}catch(e){}}
+  return null;}
+async function openverseOne(q){
+  const r=await fetch('https://api.openverse.org/v1/images/?q='+encodeURIComponent(q)+'&license_type=commercial&aspect_ratio=wide&page_size=12');if(!r.ok)throw new Error('openverse '+r.status);
+  const j=await r.json();const list=(j.results||[]).filter(x=>!x.mature);
+  for(const x of list.slice(0,4)){for(const src of [x.url,x.thumbnail]){if(!src)continue;try{const b=await blobOK(src);return{blob:b,credit:'Openverse / '+String(x.creator||x.source||'').slice(0,40)+(x.license?' (CC '+String(x.license).toUpperCase()+')':'')};}catch(e){}}}
+  return null;}
+async function freeOne(q){let it=null;try{it=await commonsOne(q);}catch(e){console.warn(e);}if(!it){try{it=await openverseOne(q);}catch(e){console.warn(e);}}
+  if(!it)return null;const f=new File([it.blob],q+'.jpg',{type:it.blob.type||'image/jpeg'});await addGalleryFiles([f],{query:q,credit:it.credit});return{idx:GALLERY.length,credit:it.credit};}
+let pexDown=false;
+async function imgOne(q,key){
+  if(key&&!pexDown){try{const it=await pexOne(q,key);if(it)return it;}catch(e){if(e.message==='AUTH'){pexDown=true;setPx('Pexels কী কাজ করছে না — কী ছাড়া ফ্রি সোর্স (Wikimedia) থেকে আনা হচ্ছে…');}else{pexDown=true;console.warn('pexels',e);}}}
+  return await freeOne(q);}
 async function pexelsFetch(){
-  const key=($('#pexelsKey').value||'').trim();if(!key){alert('আগে Pexels API কী দিন (ফ্রি)।');return;}
+  const key=($('#pexelsKey').value||'').trim();pexDown=false;
   if(!scenes.length){alert('আগে স্ক্রিপ্ট লিখে "ভিডিও তৈরি করুন" চাপুন।');return;}
   let targets=[],per=0;scenes.forEach(sc=>{if(sc.isChapter){per=0;return;}if(scImg(sc))return;const q=String(PL(sc).broll||(sc.cats&&sc.cats[0]&&CAT_EN[sc.cats[0][0]])||'').trim();if(!q)return;if(per<2||PL(sc).broll){targets.push([sc,q]);per++;}});
   targets=targets.slice(0,10);if(!targets.length){setPx('খোঁজার মতো দৃশ্য পাওয়া যায়নি। AI দিয়ে দৃশ্য সাজালে প্রতিটা দৃশ্যের জন্য খোঁজার শব্দ (broll) তৈরি হয়।');return;}
   $('#pxGo').disabled=true;const cache={};let n=0,fail=0;
-  for(const[sc,q]of targets){setPx(`⏳ নেট থেকে খোঁজা হচ্ছে: "${q}" (${toBn(n+fail+1)}/${toBn(targets.length)})`);
-    try{let it=cache[q];if(it===undefined){it=await pexOne(q,key);cache[q]=it;}if(it){setPlan(sc,'photo',it.idx);setPlan(sc,'credit',it.credit);n++;}else fail++;}
-    catch(e){if(e.message==='AUTH'){setPx('✖ Pexels API কী ভুল।');$('#pxGo').disabled=false;return;}fail++;console.warn(e);}}
+  for(const[sc,q]of targets){setPx(`নেট থেকে খোঁজা হচ্ছে: "${q}" (${toBn(n+fail+1)}/${toBn(targets.length)})…`);
+    try{let it=cache[q];if(it===undefined){it=await imgOne(q,key);cache[q]=it;}if(it){setPlan(sc,'photo',it.idx);setPlan(sc,'credit',it.credit);n++;}else fail++;}
+    catch(e){fail++;console.warn(e);}}
   $('#pxGo').disabled=false;build(true);setPx(n?`✔ ${toBn(n)}টা দৃশ্যের জন্য ছবি/ভিডিও আনা হয়েছে, গ্যালারিতে যোগ হয়েছে (ক্রেডিটসহ)।${fail?' '+toBn(fail)+'টা পাওয়া যায়নি।':''}`:'✖ কিছু আনা যায়নি — ইন্টারনেট দেখুন, অথবা "ছবি" বেছে আবার চেষ্টা করুন।',!!n);
 }
 
@@ -3930,10 +3954,10 @@ const P_=id=>paneEl[id];
 {const b=sec('media','খবরের ছবি ও ভিডিও','একসাথে কয়েকটা দিতে পারবেন। ফাইলের নাম অর্থপূর্ণ রাখলে ভালো, যেমন "সিলেট-বন্যা.jpg"।');
   const fb=fileBtn('galFiles','ছবি / ভিডিও যোগ করুন','image-plus');fb.classList.add('wide');b.appendChild(fb);add(b,$('#gallery'),$('#galOld'));
   const t=toggle('autoPhoto','নাম মিলিয়ে ছবি নিজে থেকে দৃশ্যে বসাবে');if(t)b.appendChild(t);relabel('photoStyle','ছবির রং');add(b,'photoStyle');}
-{const b=sec('media','নেট থেকে বাড়তি ছবি','খবরের সাথে মিলিয়ে ফ্রি ছবি/ভিডিও (Pexels) এনে খবরকে আরও প্রাণবন্ত করে। কপিরাইট-মুক্ত, ক্রেডিটসহ।');
+{const b=sec('media','নেট থেকে বাড়তি ছবি','কোনো কী লাগবে না — Wikimedia Commons থেকে খবরের সাথে মিলিয়ে ফ্রি ছবি আনে, ক্রেডিটসহ। Pexels কী দিলে আগে সেখান থেকে খুঁজবে (ভিডিও ক্লিপও)।');
   const l=D.createElement('label');l.className='chk';l.innerHTML='<input type="checkbox" id="netAuto"> দৃশ্য বানালে নিজে থেকেই নেট থেকে ছবি আনবে';b.appendChild(l);
-  relabel('pexelsKey','Pexels API কী (ফ্রি)');const g=grid(b);add(g,'pexelsKey','pexKind');
-  const a=D.createElement('a');a.href='https://www.pexels.com/api/';a.target='_blank';a.rel='noopener noreferrer';a.className='link';a.textContent='ফ্রি কী নিন: pexels.com/api';b.appendChild(a);
+  relabel('pexelsKey','Pexels কী (ঐচ্ছিক)');const g=grid(b);add(g,'pexelsKey','pexKind');
+  const a=D.createElement('a');a.href='https://www.pexels.com/api/';a.target='_blank';a.rel='noopener noreferrer';a.className='link';a.textContent='Pexels কী (ঐচ্ছিক): pexels.com/api';b.appendChild(a);
   setBtn('pxGo',ico('globe',16)+'এখনই নেট থেকে আনুন','');btnRow(b,'pxGo');add(b,$('#pxstatus'));
   const na=$('#netAuto');na.checked=!!settings.netAuto;na.onchange=()=>{settings.netAuto=na.checked;settings.netFor='';save();};}
 {const b=sec('media','চ্যানেলের লোগো');const r=D.createElement('div');r.className='logorow';const pv=$('#logoPrev');if(pv)r.appendChild(pv);r.appendChild(fileBtn('logoFile','লোগো দিন (PNG)','upload'));setBtn('logoClear','মুছুন','');r.appendChild($('#logoClear'));b.appendChild(r);relabel('logoPos','লোগোর জায়গা');add(b,'logoPos');}
@@ -3999,8 +4023,7 @@ Reply with ONLY JSON:
   try{const r=await callAI(prompt);const j=parseJSONLoose(r.txt);if(!j||!j.main)throw new Error('AI ঠিকমতো উত্তর দেয়নি, আবার চেষ্টা করুন');TH_.ai=Object.assign({},j,{key:newsKey()});TH_.title='';$('#thTitle').value='';save();thDraw();dirty=true;thSay('✔ নতুন লেখা বসানো হয়েছে।'+(r.cost?' '+costTxt(r.cost):''),true);}
   catch(e){thSay('✖ '+(e&&e.message||e));}b.disabled=false;}
 // ---------- net photos automatically ----------
-async function netAuto(){if(!settings.netAuto||!scenes.length)return;const key=($('#pexelsKey').value||'').trim();if(!key){setPx('নেট থেকে ছবি আনতে Pexels API কী দিন (ফ্রি)।');return;}
-  const k=newsKey();if(settings.netFor===k)return;settings.netFor=k;save();try{await pexelsFetch();}catch(e){console.warn(e);}}
+async function netAuto(){if(!settings.netAuto||!scenes.length)return;  const k=newsKey();if(settings.netFor===k)return;settings.netFor=k;save();try{await pexelsFetch();}catch(e){console.warn(e);}}
 $('#build').addEventListener('click',()=>setTimeout(netAuto,400));window.tfNetAuto=()=>netAuto();
 {const _ad=aiDoAll;aiDoAll=async function(){await _ad.apply(this,arguments);setTimeout(netAuto,300);};$('#aiAll').onclick=()=>aiDoAll();}
 // ---------- new project = clean thumbnail too ----------
@@ -5004,6 +5027,138 @@ if(typeof FXV!=='undefined'&&typeof fxImg==='function'){
 }
 })();
 </script><!--/tf7-->
+
+<style id="tf8css">
+/* ===== TF News Studio — v4 polish layer (tf-pro-design: Operate mode)
+   Tokens: ground #0C0E12 · surface #161920 · ink #E8EAEF · accent #E5391B
+   Type: TF Bangla, 5 sizes (12.5 / 13.5 / 14 / 16 / 19) · radius 8 / 12 · shadow only on floating layers
+   Taste dials: VARIANCE 3 · MOTION 3 · DENSITY 7 ===== */
+body.pro{accent-color:var(--ac);caret-color:#FF7A5C}
+body.pro ::selection{background:rgba(229,57,27,.42);color:#fff}
+body.pro :focus{outline:none}
+body.pro :focus-visible{outline:2px solid #FF7A5C!important;outline-offset:2px}
+body.pro #tfPanel input:focus-visible,body.pro #tfPanel select:focus-visible,body.pro #tfPanel textarea:focus-visible{outline-offset:0}
+body.pro h1,body.pro h2,body.pro h3,body.pro h4{text-wrap:balance}
+body.pro p,body.pro small{text-wrap:pretty}
+body.pro button,body.pro .tbtn,body.pro a{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body.pro button{transition:background-color .15s ease-out,border-color .15s ease-out,color .15s ease-out,transform .1s ease-out,opacity .15s}
+body.pro button:not(:disabled):active{transform:translateY(1px)}
+body.pro button:disabled{cursor:not-allowed}
+body.pro .transport,body.pro .tlruler,body.pro [id*=Time],body.pro .tlr,body.pro #tfScN{font-variant-numeric:tabular-nums}
+/* panel: calmer surfaces (tone steps instead of hairlines), readable Bangla sizes */
+body.pro .sx{border-color:transparent;padding:14px 14px 15px;margin-bottom:8px}
+body.pro .sxh h3{font-size:14px}
+body.pro .sxb>label:not(.chk):not(.fbtn),body.pro .gx>label:not(.chk),body.pro #tfPanel label{font-size:13px;line-height:1.5}
+body.pro #tfPanel input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),body.pro #tfPanel select{font-size:14px;min-height:40px}
+body.pro #tfPanel textarea{font-size:14.5px!important;line-height:1.65}
+body.pro #tfPanel select{width:100%;max-width:100%;text-overflow:ellipsis;background-color:var(--bg)!important;color:var(--tx)!important}
+body.pro #tfPanel select option{background:#161920;color:#E8EAEF}
+body.pro #tfPanel button{min-height:40px}
+body.pro .tfPane>.ph h2{font-size:19px;letter-spacing:-.1px}
+/* one switch style everywhere (was a native checkbox in the writing options) */
+body.pro .wrkey input[type=checkbox]:not(.sw){appearance:none;-webkit-appearance:none;width:38px!important;min-width:38px;height:22px!important;border-radius:11px;background:#3A404C;position:relative;cursor:pointer;margin:0;transition:background-color .2s ease-out}
+body.pro .wrkey input[type=checkbox]:not(.sw)::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s ease-out}
+body.pro .wrkey input[type=checkbox]:not(.sw):checked{background:var(--ac)}
+body.pro .wrkey input[type=checkbox]:not(.sw):checked::after{transform:translateX(16px)}
+body.pro .wrkey small{color:var(--t2)!important}
+/* status messages read as calm inline notes */
+body.pro #tfPanel .status{line-height:1.55;padding:9px 11px}
+/* preview: the frame is the hero of the screen */
+body.pro #tfPrev .stage canvas{border-radius:10px;box-shadow:0 0 0 1px #262B35}
+/* long text never breaks layout */
+body.pro #tfPanel *{overflow-wrap:anywhere}
+body.pro #tfPanel .sxb>*{min-width:0}
+/* channel dialog */
+#tfChOv{overscroll-behavior:contain}
+#tfChOv .chbox{animation:tf8in .18s ease-out}
+@keyframes tf8in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
+/* toast for short confirmations */
+#tf8Toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,12px);opacity:0;pointer-events:none;background:#252A34;color:#E8EAEF;border-radius:10px;padding:11px 16px;font-size:14px;box-shadow:0 12px 32px rgba(0,0,0,.45);z-index:90;transition:opacity .2s ease-out,transform .2s ease-out;max-width:min(92vw,520px)}
+#tf8Toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ===== tablet & phone ===== */
+@media(max-width:900px){
+ body.pro{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+ body.pro #tfTop{flex-wrap:nowrap!important;height:56px!important;padding:0 10px!important;gap:8px!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;position:sticky;top:0;z-index:30}
+ body.pro #tfTop::-webkit-scrollbar{display:none}
+ body.pro #tfTop .brand{flex:none}
+ body.pro #tfTop .brand div{display:none}
+ body.pro #tfTop .sp{display:none}
+ body.pro #tfTopBtns{display:flex;gap:2px;margin-left:auto;flex:none}
+ body.pro .tbtn{width:40px;padding:0!important;justify-content:center}
+ body.pro .tbtn.pri{width:auto;padding:0 12px!important}
+ body.pro .tbtn span.tl{display:none}
+ body.pro label.tbtn{font-size:0!important}
+ body.pro .tbtn.pri span.tl{display:inline}
+ body.pro #tfTop .vsep{display:none}
+ body.pro #tfCh{max-width:150px;flex:none}
+ body.pro #tfBody{display:flex;flex-direction:column}
+ body.pro #tfWork{order:-1}
+ body.pro #tfPrev{padding:10px 10px 0!important;min-height:0!important;flex:none!important}
+ body.pro #tfPrev .stage{flex:none!important;aspect-ratio:var(--tf8ar,16/9);max-height:62vh}
+ body.pro #tfPrev .stage canvas{max-width:100%!important;max-height:100%!important;width:auto!important;height:auto!important}
+ body.pro .transport{flex-wrap:wrap;height:auto!important;padding:8px 0!important;row-gap:8px!important}
+ body.pro #tfSplit{display:none}
+ body.pro #tfDock{max-height:300px}
+ body.pro #tfRail{position:fixed!important;left:0;right:0;bottom:0;top:auto;width:100%!important;height:calc(66px + env(safe-area-inset-bottom));padding:4px 4px env(safe-area-inset-bottom)!important;flex-direction:row!important;justify-content:space-between;overflow-x:auto;border:0!important;border-top:1px solid var(--bd)!important;background:rgba(12,14,18,.97)!important;z-index:40}
+ body.pro #tfRail button{flex:1 0 56px;min-width:56px!important;padding:6px 0 4px!important;font-size:11px!important}
+ body.pro #tfRail button .pill{width:38px!important;height:26px!important}
+ body.pro #tfRail .railsp{display:none}
+ body.pro #tfPanel{width:auto!important;border-right:0!important}
+ body.pro .tfPane{padding:14px 12px 0!important}
+ body.pro .pfoot{bottom:calc(66px + env(safe-area-inset-bottom))}
+ #tfChOv{align-items:flex-end}
+ #tfChOv .chbox{flex-direction:column;width:100vw;max-height:92vh;border-radius:16px 16px 0 0}
+ #tfChOv .chside{width:auto;border-right:0;border-bottom:1px solid var(--bd,#262B35);max-height:30vh;padding:12px 10px}
+ #tfChOv .chmain{padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+ #tfChOv .chlogo{flex-wrap:wrap}
+ #tfChOv .chlogo .pv{width:96px;height:96px}
+ #tf8Toast{bottom:calc(80px + env(safe-area-inset-bottom))}
+}
+@media(max-width:480px){body.pro #tfDock{display:none}body.pro .tbtn.pri span.tl{display:none}body.pro .tbtn,body.pro .tbtn.pri{width:36px;padding:0!important}body.pro #tfCh{max-width:120px}body.pro #tfTop{gap:6px!important}}
+body.pro #tfPanel select#len{width:100%!important}
+@media(prefers-reduced-motion:reduce){body.pro *,body.pro *::before,body.pro *::after,#tfChOv *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+<script id="tf8">
+/* v4 polish: accessibility + small UX states (no visual-logic changes to the video) */
+(()=>{const D=document,$=s=>D.querySelector(s);
+ // theme colour for mobile browser bar
+ if(!$('meta[name=theme-color]')){const m=D.createElement('meta');m.name='theme-color';m.content='#0C0E12';D.head.appendChild(m);}
+ D.documentElement.style.colorScheme='dark';
+ // toast region
+ const toast=D.createElement('div');toast.id='tf8Toast';toast.setAttribute('role','status');toast.setAttribute('aria-live','polite');D.body.appendChild(toast);
+ let tt=0;window.tf8Toast=(msg)=>{toast.textContent=msg;toast.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove('on'),2600);};
+ function a11y(){
+  // icon-only buttons get a spoken name from their tooltip
+  D.querySelectorAll('button,label.tbtn').forEach(b=>{if(b.getAttribute('aria-label'))return;const txt=(b.textContent||'').trim();const t=b.getAttribute('title');
+    if(!txt&&t)b.setAttribute('aria-label',t);
+    else if(b.classList.contains('tbtn')){const tl=b.querySelector('.tl');if(tl&&tl.textContent.trim())b.setAttribute('aria-label',tl.textContent.trim());else if(t)b.setAttribute('aria-label',t);}
+    if(b.tagName==='BUTTON'&&!b.getAttribute('type'))b.setAttribute('type','button');});
+  // SVG icons are decoration
+  D.querySelectorAll('#tfApp button svg,#tfApp .tbtn svg,#tfChOv svg').forEach(s=>s.setAttribute('aria-hidden','true'));
+  // async status lines are announced
+  D.querySelectorAll('.status').forEach(s=>{s.setAttribute('aria-live','polite');s.setAttribute('role','status');});
+  // channel dialog is modal
+  const box=$('#tfChOv .chbox');if(box)box.setAttribute('aria-modal','true');
+  // rail = navigation with current step
+  D.querySelectorAll('#tfRail button').forEach(b=>{if(b.classList.contains('on'))b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+  // inputs: no password managers on API keys, no spellcheck on keys
+  D.querySelectorAll('input[type=password]').forEach(i=>{i.setAttribute('autocomplete','off');i.spellcheck=false;});
+  // decorative images / gallery thumbs need alt
+  D.querySelectorAll('#tfApp img:not([alt])').forEach(i=>i.setAttribute('alt',''));
+ }
+ a11y();setTimeout(a11y,1200);
+ new MutationObserver(()=>{clearTimeout(a11y.t);a11y.t=setTimeout(a11y,120);}).observe(D.body,{childList:true,subtree:true});
+ D.addEventListener('click',()=>setTimeout(a11y,60));
+ // Esc closes the channel dialog (when a channel name exists)
+ D.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const ov=$('#tfChOv');if(!ov||ov.classList.contains('hidden'))return;const c=ov.querySelector('.chbtn.ghost');if(c&&!c.disabled&&c.offsetParent)c.click();});
+ // keep the phone preview the same shape as the chosen video ratio
+ function ar(){const c=$('#tfPrev .stage canvas');if(c&&c.width&&c.height)D.documentElement.style.setProperty('--tf8ar',c.width+'/'+c.height);}
+ setInterval(ar,1500);ar();
+ // short confirmation after saving a project file
+ D.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.tbtn');if(b&&/সেভ/.test(b.textContent||''))setTimeout(()=>window.tf8Toast('প্রজেক্ট ফাইল ডাউনলোড হচ্ছে…'),150);},true);
+})();
+</script>
 
 </body>
 </html>
