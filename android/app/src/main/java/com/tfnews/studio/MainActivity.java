@@ -60,6 +60,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         web = new WebView(this);
+        web.setBackgroundColor(0xFFFAF8F4);
+        try {
+            // keep the page alive while Gemini (or another app) is in front, so coming back is instant
+            web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
+        } catch (Exception e) { }
         setContentView(web);
 
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
@@ -83,6 +88,20 @@ public class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return loader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+                // the phone closed the page in the background: rebuild it instead of crashing (work is saved in the app)
+                try {
+                    if (web != null) {
+                        ((android.view.ViewGroup) web.getParent()).removeView(web);
+                        web.destroy();
+                        web = null;
+                    }
+                } catch (Exception e) { }
+                recreate();
+                return true;
             }
 
             @Override
@@ -165,9 +184,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (savedInstanceState != null) {
-            web.restoreState(savedInstanceState);
-        } else {
+        if (savedInstanceState == null || web.restoreState(savedInstanceState) == null) {
             web.loadUrl(HOME);
         }
 
@@ -197,7 +214,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        web.saveState(outState);
+        if (web != null) web.saveState(outState);
     }
 
     @Override
