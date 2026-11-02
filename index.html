@@ -5629,5 +5629,259 @@ let mt=0;new MutationObserver(()=>{clearTimeout(mt);mt=setTimeout(tidy,150);}).o
 D.querySelector('meta[name=theme-color]')&&D.querySelector('meta[name=theme-color]').setAttribute('content','#06070A');
 })();
 </script><!--/tf9-->
+<style id="tf10css">/* ===== TF News Studio — v6: cleaner panels (accordions), smarter news window (topics + keyword search) ===== */
+
+/* ---- rail: only a quiet "done" dot, no step numbers ---- */
+html body.pro #tfRail .stepn{display:none}
+html body.pro #tfRail button.done .stepn{display:block;min-width:0;width:9px;height:9px;right:12px;top:2px;border:2px solid var(--nv);background:var(--ok);padding:0;font-size:0}
+html body.pro #tfRail button.done .stepn::after{content:none}
+html body.pro #tfRail button.on.done .stepn{background:var(--ok)}
+
+/* ---- panel sections as accordions ---- */
+html body.pro .sx.tf10a>.sxh{cursor:pointer;user-select:none;margin-bottom:13px;transition:margin .2s}
+html body.pro .sx.tf10a>.sxh::after{content:'';flex:none;width:18px;height:18px;margin-left:2px;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236F7789' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");transition:transform .25s var(--ease)}
+html body.pro .sx.tf10a.closed>.sxh{margin-bottom:0}
+html body.pro .sx.tf10a.closed>.sxh::after{transform:rotate(-90deg)}
+html body.pro .sx.tf10a>.sxh:hover h3{color:var(--tx)}
+html body.pro .sx.tf10a.closed>*:not(.sxh){display:none!important}
+html body.pro .sx.tf10a.closed{padding-top:14px;padding-bottom:14px}
+html body.pro .sx.tf10a:not(.closed)>*:not(.sxh){animation:tf9up .3s var(--ease) both}
+.tf10sum{font-size:12px;color:var(--t3);font-weight:500;margin-left:auto;padding-right:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
+
+/* ---- news window: calm header ---- */
+html body #nwModal .nwhead{padding:20px 22px 6px;gap:10px;align-items:flex-start;flex-wrap:wrap}
+html body #nwModal .nwhead b{font-size:20px;font-weight:700;letter-spacing:-.2px}
+html body #nwModal .nwhead .ghost{width:40px!important;height:40px!important;padding:0!important;font-size:0!important;color:transparent!important;overflow:hidden;border-radius:50%;position:relative;background:#141720}
+html body #nwModal .nwhead .ghost::before{content:'';position:absolute;inset:0;background:no-repeat center/18px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A3AABA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5'/%3E%3C/svg%3E")}
+html body #nwModal .nwhead .ghost.spin::before{animation:tf10spin .8s linear infinite}
+html body #nwModal .ib{border-radius:50%}
+html body #nwModal .segc{margin:10px 22px 6px}
+html body #nwModal .nwscroll{padding:6px 22px 22px}
+html body #nwModal .nwstat{margin:0 0 10px;font-size:12.5px;align-items:center}
+html body #nwModal .nwstat small,html body #nwModal #nwLive>.hint,html body #nwModal #nwPapers>.hint{display:none!important}
+html body #nwModal .nwstat .dot{margin-top:0}
+
+/* search + source */
+.tf10bar{display:flex;gap:10px;margin:2px 0 12px}
+.tf10q{position:relative;flex:1;min-width:0}
+.tf10q svg{position:absolute;left:14px;top:50%;margin-top:-9px;color:#6F7789;pointer-events:none}
+html body #nwModal .tf10q input[type=text]{padding-left:42px;padding-right:40px;height:48px;border-radius:14px;font-size:15.5px}
+.tf10x{position:absolute;right:8px;top:50%;margin-top:-15px;width:30px;height:30px;border:0;border-radius:50%;background:#222736;color:#EEF0F5;font-size:17px;line-height:1;cursor:pointer;display:none;transition:background .15s}
+.tf10x:hover{background:#2D3446}
+.tf10q.has .tf10x{display:block}
+#tf10Src{flex:none;max-width:190px;height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#0A0C11;color:#EEF0F5;font:inherit;font-size:14px;padding:0 34px 0 14px;-webkit-appearance:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A3AABA' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;transition:border-color .18s}
+#tf10Src:hover{border-color:rgba(255,255,255,.22)}
+#tf10Src:focus{outline:0;border-color:#FF4A2B;box-shadow:0 0 0 4px rgba(255,74,43,.16)}
+#tf10Src option{background:#0E1016}
+html body #nwModal #nwChips{display:none!important}
+
+/* topic chips */
+#tf10Cats{display:flex;gap:8px;overflow-x:auto;padding:2px 22px 12px;margin:0 -22px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+#tf10Cats::-webkit-scrollbar{display:none}
+#tf10Cats button{flex:none;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:#141720;color:#A3AABA;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .18s,color .18s,border-color .18s,transform .15s}
+#tf10Cats button:hover{color:#fff;border-color:rgba(255,255,255,.22);transform:translateY(-1px)}
+#tf10Cats button:active{transform:scale(.96)}
+#tf10Cats button i{font-style:normal;font-size:11.5px;font-weight:700;color:#6F7789;font-variant-numeric:tabular-nums}
+#tf10Cats button.on{background:#EEF0F5;color:#0A0B10;border-color:#EEF0F5}
+#tf10Cats button.on i{color:#4A5062}
+#tf10Cats button.zero{opacity:.4}
+
+/* result line */
+#tf10Res{display:flex;align-items:center;gap:10px;min-height:22px;margin:0 2px 10px;font-size:13px;color:#A3AABA}
+#tf10Res b{color:#EEF0F5;font-weight:700}
+#tf10Res button{margin-left:auto;border:0;background:none;color:#FF8A70;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:4px 6px;border-radius:8px}
+#tf10Res button:hover{background:rgba(255,138,112,.1)}
+
+/* list rows */
+html body #nwModal .nwlist{background:transparent;border:0;border-radius:0;display:flex;flex-direction:column;gap:8px;overflow:visible}
+html body #nwModal .nwi{gap:14px;padding:10px 12px 10px 10px;border:1px solid rgba(255,255,255,.06);border-radius:16px;background:#0C0E13;transition:background .15s,border-color .15s,transform .18s var(--ease);animation:tf9up .35s var(--ease) both}
+html body #nwModal .nwi:first-child{border-top:1px solid rgba(255,255,255,.06)}
+html body #nwModal .nwi:hover{background:#12151C;border-color:rgba(255,255,255,.14);transform:translateY(-1px)}
+html body #nwModal .nwi img,html body #nwModal .nwi .ph{width:104px;height:68px;border-radius:11px}
+html body #nwModal .nwi .t b{font-size:15.5px;line-height:1.5;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+html body #nwModal .nwi .t small{margin-top:5px;font-size:12.5px}
+html body #nwModal .nwi .bk{width:40px;height:40px;border-radius:50%;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+html body #nwModal .nwi .bk.on{background:#FF4A2B;color:#fff}
+html body #nwModal .nwi i.new{background:rgba(255,74,43,.16);color:#FF7A5C;border-radius:6px;padding:1px 7px;font-size:11.5px}
+html body #nwModal mark.tf10m{background:rgba(255,200,60,.22);color:#FFD76A;border-radius:4px;padding:0 2px}
+html body #nwModal #nwMore{height:44px;border-radius:12px;padding:0 24px;background:#141720;color:#EEF0F5;border:1px solid rgba(255,255,255,.12)}
+html body #nwModal #nwMore:hover{background:#1A1E29}
+.tf10empty{text-align:center;padding:46px 12px 30px;color:#A3AABA}
+.tf10empty b{display:block;font-size:16px;color:#EEF0F5;margin-bottom:6px}
+.tf10empty .sg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.tf10empty .sg button{height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#141720;color:#EEF0F5;font:inherit;font-size:13.5px;cursor:pointer}
+.tf10empty .sg button:hover{background:#1A1E29}
+html body #nwModal .basket{margin:0 14px 14px;border-radius:16px;padding:10px 10px 10px 18px;box-shadow:0 14px 40px rgba(0,0,0,.5);animation:tf9up .3s var(--ease)}
+html body #nwModal .basket button{border-radius:12px;height:38px}
+@keyframes tf10spin{to{transform:rotate(360deg)}}
+@media(max-width:640px){
+  html body #nwModal .nwbox{width:100vw;height:100dvh;max-height:none;border-radius:0}
+  .tf10bar{flex-direction:column}#tf10Src{max-width:none;width:100%}
+  html body #nwModal .nwi img,html body #nwModal .nwi .ph{width:84px;height:60px}
+}
+</style><!--/tf10css-->
+<script id="tf10">/* ===================================================================
+   TF News Studio — v6
+   1) News window: topic chips + keyword search (with related words) across all loaded news
+   2) Panels: sections fold like accordions, rarely used ones start closed
+   Only adds behaviour on top of the existing app.
+   =================================================================== */
+(()=>{'use strict';
+const D=document,$=(s,r)=>(r||D).querySelector(s),$$=(s,r)=>[...(r||D).querySelectorAll(s)];
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const nz=s=>String(s||'').normalize('NFC').replace(/[‌‍]/g,'').toLowerCase();
+const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const escH=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- topics ---------- */
+const CATS=[
+ ['intl','আন্তর্জাতিক',['আন্তর্জাতিক','international','বিদেশ','বিশ্ব','বহির্বিশ্ব','world'],
+  ['যুক্তরাষ্ট্র','আমেরিকা','ট্রাম্প','বাইডেন','ভারত','পাকিস্তান','চীন','রাশিয়া','পুতিন','ইউক্রেন','ইসরায়েল','গাজা','ফিলিস্তিন','ইরান','জাতিসংঘ','ইউরোপ','মোদি','মিয়ানমার','রোহিঙ্গা','নেপাল','শ্রীলঙ্কা','আফগানিস্তান','সৌদি','যুক্তরাজ্য','ব্রিটেন','জাপান','কানাডা','অস্ট্রেলিয়া','তুরস্ক','লেবানন','সিরিয়া','ইয়েমেন','নেতানিয়াহু','হোয়াইট হাউস','ন্যাটো','দিল্লি','ওয়াশিংটন','বেইজিং','মস্কো']],
+ ['pol','রাজনীতি',['রাজনীতি','politics','রাজনৈতিক'],
+  ['সরকার','বিএনপি','আওয়ামী','জামায়াত','নির্বাচন','সংসদ','মন্ত্রী','উপদেষ্টা','হরতাল','আন্দোলন','এনসিপি','নির্বাচন কমিশন','ভোট','মনোনয়ন','রাজনৈতিক','সংসদ সদস্য','এমপি','মহাসচিব','দলীয়','সংবিধান','গণঅভ্যুত্থান']],
+ ['sport','খেলা',['খেলাধুলা','খেলা','sports','sport','ক্রীড়া'],
+  ['খেলা','ক্রিকেট','ফুটবল','বিশ্বকাপ','টেস্ট','ওয়ানডে','টি-টোয়েন্টি','বিপিএল','ম্যাচ','কোচ','বিসিবি','ফিফা','মেসি','রোনালদো','সাকিব','মুশফিক','টাইগার','সিরিজ','লিগ','টেনিস','অলিম্পিক','ব্যাটার','বোলার','উইকেট','স্কোর','চ্যাম্পিয়ন','এশিয়া কাপ','আইপিএল']],
+ ['crime','অপরাধ',['অপরাধ','crime','ক্রাইম'],
+  ['খুন','হত্যা','নিহত','ধর্ষণ','গ্রেপ্তার','গ্রেফতার','ছুরি','লাশ','মামলা','আদালত','পুলিশ','ডাকাত','চুরি','অপহরণ','মাদক','ইয়াবা','র‍্যাব','আসামি','কারাগার','জঙ্গি','গুলি','আত্মহত্যা','দুর্নীতি','দুদক','রিমান্ড','জামিন','সন্ত্রাসী','ছিনতাই']],
+ ['eco','অর্থনীতি',['অর্থনীতি','economy','ব্যবসা','বাণিজ্য','business'],
+  ['টাকা','ডলার','দাম','বাজার','ব্যাংক','ঋণ','বাজেট','জিডিপি','মূল্যস্ফীতি','রপ্তানি','আমদানি','শেয়ারবাজার','বিনিয়োগ','রিজার্ভ','ব্যবসা','বাণিজ্য','স্বর্ণ','সোনা','জ্বালানি','এলপিজি','চালের','পেঁয়াজ','এনবিআর','পোশাক','শিল্প','প্রবাসী আয়','রেমিট্যান্স','মূল্যবৃদ্ধি']],
+ ['ent','বিনোদন',['বিনোদন','entertainment'],
+  ['সিনেমা','চলচ্চিত্র','নাটক','অভিনেতা','অভিনেত্রী','শিল্পী','বলিউড','হলিউড','ঢালিউড','ওটিটি','কনসার্ট','পরিচালক','তারকা','সংগীত','গায়ক','গায়িকা','ওয়েব সিরিজ','মুক্তি পাচ্ছে']],
+ ['tech','প্রযুক্তি',['প্রযুক্তি','tech','technology'],
+  ['প্রযুক্তি','এআই','কৃত্রিম বুদ্ধিমত্তা','মোবাইল','স্মার্টফোন','ইন্টারনেট','অ্যাপ','ফেসবুক','গুগল','অ্যাপল','সাইবার','ডিজিটাল','গ্যাজেট','স্যামসাং','মাইক্রোসফট','টেসলা','মহাকাশ','নাসা','রোবট','চ্যাটজিপিটি','মেটা']],
+ ['edu','শিক্ষা',['শিক্ষা','education','শিক্ষা'],
+  ['শিক্ষা','স্কুল','কলেজ','বিশ্ববিদ্যালয়','শিক্ষার্থী','পরীক্ষা','এসএসসি','এইচএসসি','ভর্তি','শিক্ষক','ঢাবি','বুয়েট','কোচিং','বৃত্তি','ফলাফল','ক্লাস']],
+ ['health','স্বাস্থ্য',['স্বাস্থ্য','health'],
+  ['স্বাস্থ্য','হাসপাতাল','ডাক্তার','চিকিৎসক','রোগ','ডেঙ্গু','করোনা','টিকা','ওষুধ','ক্যানসার','চিকিৎসা','রোগী','ভাইরাস','পুষ্টি']],
+ ['wx','আবহাওয়া ও দুর্ঘটনা',['আবহাওয়া','দুর্যোগ','weather'],
+  ['বৃষ্টি','বন্যা','ঝড়','ঘূর্ণিঝড়','তাপমাত্রা','শৈত্যপ্রবাহ','আবহাওয়া','ভূমিকম্প','আগুন','অগ্নিকাণ্ড','দুর্ঘটনা','ডুবে','লঞ্চ','নৌকা','তাপপ্রবাহ','জলাবদ্ধতা','সড়ক','বজ্রপাত']]
+].map(c=>({id:c[0],name:c[1],alias:c[2].map(nz),words:c[3].map(nz)}));
+const SYN={
+ 'খুন':['খুন','হত্যা','নিহত','ছুরিকাঘাত','লাশ','খুনি'],'হত্যা':['হত্যা','খুন','নিহত','লাশ'],
+ 'ধর্ষণ':['ধর্ষণ','ধর্ষ','যৌন নির্যাতন','যৌন হয়রানি'],'চুরি':['চুরি','ডাকাতি','ছিনতাই'],
+ 'মাদক':['মাদক','ইয়াবা','গাঁজা','হেরোইন','ফেনসিডিল'],'বৃষ্টি':['বৃষ্টি','বর্ষণ','জলাবদ্ধতা'],
+ 'নির্বাচন':['নির্বাচন','ভোট','নির্বাচন কমিশন','প্রার্থী'],'দাম':['দাম','মূল্য','বাজারদর','মূল্যবৃদ্ধি'],
+ 'ক্রিকেট':['ক্রিকেট','টেস্ট','ওয়ানডে','টি-টোয়েন্টি','বিপিএল','বিসিবি','উইকেট'],
+ 'ফুটবল':['ফুটবল','ফিফা','লিগ','গোল করে'],'আগুন':['আগুন','অগ্নিকাণ্ড','অগ্নিদগ্ধ'],
+ 'দুর্ঘটনা':['দুর্ঘটনা','সংঘর্ষ','চাপা','ট্রাক','বাসের'],'আত্মহত্যা':['আত্মহত্যা','ঝুলন্ত','আত্মহননের'],
+ 'ডেঙ্গু':['ডেঙ্গু','এডিস'],'বন্যা':['বন্যা','জলাবদ্ধতা','প্লাবিত'],'গ্রেপ্তার':['গ্রেপ্তার','গ্রেফতার','আটক'],
+ 'ভারত':['ভারত','ভারতীয়','দিল্লি','মোদি'],'ট্রাম্প':['ট্রাম্প','হোয়াইট হাউস']
+};
+Object.keys(SYN).forEach(k=>{SYN[nz(k)]=SYN[k].map(nz);});
+const catByAlias=t=>CATS.find(c=>c.alias.includes(t));
+function expand(t){const c=catByAlias(t);if(c)return [t].concat(c.words);return SYN[t]||[t];}
+function parseQ(raw){return raw.split(/[,،|]+/).map(g=>g.trim()).filter(Boolean).map(g=>g.split(/\s+/).map(w=>expand(nz(w))));}
+const hit=(txt,groups)=>groups.some(g=>g.every(set=>set.some(t=>txt.includes(t))));
+function prep(x){if(x._t!==undefined)return x;x._t=nz(x.title);x._d=nz(x.desc);const all=x._t+' '+x._d;x._c=new Set(CATS.filter(c=>c.words.some(w=>all.includes(w))).map(c=>c.id));return x;}
+
+let allowed=0;
+function nwOK(){return typeof NW!=='undefined'&&typeof nwRender==='function'&&typeof nwFiltered==='function'&&$('#nwQ')&&$('#nwList');}
+
+/* ---------- override the filter ---------- */
+function install(){
+  if(allowed||!nwOK())return false;allowed=1;
+  if(!NW.cat)NW.cat='all';
+  window.nwFiltered=function(){
+    const q=(($('#nwQ')||{}).value||'').trim();const groups=q?parseQ(q):null;
+    let L=NW.items.filter(x=>NW.src==='all'||x.src===NW.src);
+    if(groups||NW.cat!=='all')L.forEach(prep);
+    if(groups){L=L.filter(x=>hit(x._t+' '+x._d,groups));
+      L=L.map(x=>({x,t:hit(x._t,groups)?1:0})).sort((a,b)=>b.t-a.t||((b.x.date||0)-(a.x.date||0))).map(o=>o.x);}
+    if(NW.cat!=='all')L=L.filter(x=>x._c.has(NW.cat));
+    return L;};
+  const _r=window.nwRender;window.nwRender=function(){const r=_r.apply(this,arguments);try{after();}catch(e){}return r;};
+  const _c=window.nwChips;window.nwChips=function(){const r=_c.apply(this,arguments);try{syncSrc();}catch(e){}return r;};
+  buildUI();after();syncSrc();return true;
+}
+
+/* ---------- UI ---------- */
+function buildUI(){
+  const q=$('#nwQ');if(!q||$('.tf10bar'))return;
+  q.placeholder='কিওয়ার্ড লিখুন — যেমন: খেলাধুলা, খুন, আন্তর্জাতিক';q.setAttribute('autocomplete','off');q.setAttribute('aria-label','খবর খুঁজুন');
+  const bar=D.createElement('div');bar.className='tf10bar';
+  const wrap=D.createElement('div');wrap.className='tf10q';
+  wrap.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+  q.parentNode.insertBefore(bar,q);wrap.appendChild(q);
+  const x=D.createElement('button');x.type='button';x.className='tf10x';x.setAttribute('aria-label','মুছুন');x.textContent='×';wrap.appendChild(x);bar.appendChild(wrap);
+  const sel=D.createElement('select');sel.id='tf10Src';sel.setAttribute('aria-label','কোন পত্রিকা');bar.appendChild(sel);
+  const cats=D.createElement('div');cats.id='tf10Cats';cats.setAttribute('role','tablist');bar.after(cats);
+  const res=D.createElement('div');res.id='tf10Res';res.setAttribute('aria-live','polite');cats.after(res);
+  const upd=()=>wrap.classList.toggle('has',!!q.value);
+  q.addEventListener('input',upd);
+  x.onclick=()=>{q.value='';upd();q.dispatchEvent(new Event('input',{bubbles:true}));q.focus();};
+  sel.onchange=()=>{NW.src=sel.value;try{nwSave();}catch(e){}NW.shown=40;nwChips();nwRender();};
+  cats.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;NW.cat=b.dataset.c;NW.shown=40;nwRender();});
+  res.addEventListener('click',e=>{if(!e.target.closest('button'))return;q.value='';upd();NW.cat='all';if(NW.src!=='all'){NW.src='all';try{nwSave();}catch(er){}nwChips();}NW.shown=40;nwRender();});
+  q.addEventListener('keydown',e=>{if(e.key==='Escape'&&q.value){e.stopImmediatePropagation();e.preventDefault();x.click();}},true);
+}
+function syncSrc(){
+  const sel=$('#tf10Src');if(!sel||typeof NW_SRC==='undefined')return;
+  const cnt={};NW.items.forEach(x=>cnt[x.src]=(cnt[x.src]||0)+1);
+  const ids=Object.keys(NW_SRC).filter(id=>cnt[id]);
+  sel.innerHTML='<option value="all">সব পত্রিকা</option>'+ids.map(id=>`<option value="${escH(id)}">${escH(NW_SRC[id])} (${bn(cnt[id])})</option>`).join('');
+  sel.value=NW.src&&(NW.src==='all'||cnt[NW.src])?NW.src:'all';
+}
+function after(){
+  const q=(($('#nwQ')||{}).value||'').trim();const groups=q?parseQ(q):null;
+  // chips with counts (respect source + keyword, ignore the chosen topic)
+  const base=NW.items.filter(x=>(NW.src==='all'||x.src===NW.src)&&(!groups||hit((prep(x),x._t+' '+x._d),groups)));
+  base.forEach(prep);
+  const cats=$('#tf10Cats');
+  if(cats){
+    const cnt={};base.forEach(x=>x._c.forEach(c=>cnt[c]=(cnt[c]||0)+1));
+    const row=[{id:'all',name:'সব',n:base.length}].concat(CATS.map(c=>({id:c.id,name:c.name,n:cnt[c.id]||0})));
+    const keep=cats.scrollLeft;
+    cats.innerHTML=row.map(c=>`<button type="button" role="tab" data-c="${c.id}" aria-selected="${NW.cat===c.id}" class="${NW.cat===c.id?'on':''}${c.n?'':' zero'}">${escH(c.name)}<i>${bn(c.n)}</i></button>`).join('');
+    cats.scrollLeft=keep;
+    const on=$('button.on',cats);if(on&&on.scrollIntoView&&!cats._init){cats._init=1;}
+  }
+  // result line
+  const res=$('#tf10Res');
+  if(res){const L=(typeof nwFiltered==='function'?nwFiltered():NW.view)||[];const filtered=!!q||NW.cat!=='all'||NW.src!=='all';
+    if(filtered&&NW.items.length&&L.length){const label=q?`‘${escH(q)}’`:(NW.cat!=='all'?escH((CATS.find(c=>c.id===NW.cat)||{}).name||''):'');
+      res.innerHTML=`<span>${label?label+' — ':''}<b>${bn(L.length)}টি</b> খবর পাওয়া গেছে</span><button type="button">সব দেখুন</button>`;}
+    else res.innerHTML='';}
+  // highlight + empty state
+  const list=$('#nwList');
+  const empty=$('.hint',list);
+  if(empty&&NW.items.length){
+    const sg=['খেলাধুলা','আন্তর্জাতিক','খুন','রাজনীতি','অর্থনীতি','বৃষ্টি'];
+    list.innerHTML=`<div class="tf10empty"><b>কোনো খবর পাওয়া যায়নি</b>অন্য শব্দ দিয়ে খুঁজুন, বা নিচের একটা বেছে নিন<div class="sg">${sg.map(s=>`<button type="button">${s}</button>`).join('')}</div></div>`;
+    $$('.sg button',list).forEach(b=>b.onclick=()=>{const qq=$('#nwQ');qq.value=b.textContent;qq.dispatchEvent(new Event('input',{bubbles:true}));});
+  }
+  if(groups){const terms=[...new Set(groups.flat(2))].filter(t=>t.length>1).sort((a,b)=>b.length-a.length);
+    if(terms.length){const re=new RegExp('([\\p{L}\\p{M}]*(?:'+terms.map(escRe).join('|')+')[\\p{L}\\p{M}]*)','giu');
+      $$('.nwi .t b',list).forEach(b=>{const w=D.createTreeWalker(b,NodeFilter.SHOW_TEXT);const ns=[];while(w.nextNode())ns.push(w.currentNode);
+        ns.forEach(n=>{const v=n.nodeValue;re.lastIndex=0;if(!re.test(v))return;re.lastIndex=0;const f=D.createDocumentFragment();let last=0,m;
+          while((m=re.exec(v))){if(m.index>last)f.appendChild(D.createTextNode(v.slice(last,m.index)));const mk=D.createElement('mark');mk.className='tf10m';mk.textContent=m[0];f.appendChild(mk);last=m.index+m[0].length;if(m[0].length===0)re.lastIndex++;}
+          if(last<v.length)f.appendChild(D.createTextNode(v.slice(last)));n.replaceWith(f);});});}}
+  // basket buttons: show a check when picked
+  $$('.nwi .bk',list).forEach(b=>{b.setAttribute('aria-label',b.classList.contains('on')?'ঝুড়ি থেকে সরান':'ঝুড়িতে রাখুন');});
+}
+// "/" focuses the search while the news window is open
+D.addEventListener('keydown',e=>{if(e.key!=='/'||e.ctrlKey||e.metaKey||e.altKey)return;const m=$('#nwModal');if(!m||m.classList.contains('hidden'))return;const a=D.activeElement;if(a&&['INPUT','TEXTAREA','SELECT'].includes(a.tagName))return;const q=$('#nwQ');if(q){e.preventDefault();q.focus();q.select();}});
+
+/* ---------- accordions ---------- */
+const OPEN={news:[0,1],script:[0],media:[0],voice:[0],music:[0,1],design:[0],thumb:[0,1],live:[0]};
+let st={};try{st=JSON.parse(localStorage.getItem('tf10_acc')||'{}')||{};}catch(e){}
+const saveSt=()=>{try{localStorage.setItem('tf10_acc',JSON.stringify(st));}catch(e){}};
+function accordions(){
+  $$('#tfPanel .tfPane').forEach(p=>{const id=p.dataset.p;const secs=[...p.children].filter(c=>c.classList.contains('sx'));
+    secs.forEach((s,i)=>{if(s.dataset.tf10)return;const head=$('.sxh',s);if(!head)return;s.dataset.tf10='1';
+      const key=id+'|'+((head.querySelector('h3')||{}).textContent||i).trim();
+      s.classList.add('tf10a');
+      const open=key in st?st[key]:(OPEN[id]||[0]).includes(i);
+      if(!open)s.classList.add('closed');
+      head.setAttribute('role','button');head.setAttribute('tabindex','0');head.setAttribute('aria-expanded',String(open));
+      const tog=()=>{const c=s.classList.toggle('closed');head.setAttribute('aria-expanded',String(!c));st[key]=!c;saveSt();};
+      head.addEventListener('click',e=>{if(e.target.closest('.tf9i'))return;tog();});
+      head.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===head){e.preventDefault();tog();}});
+    });});
+}
+function tick(){accordions();install();}
+tick();setTimeout(tick,600);setTimeout(tick,2000);
+let mt=0;new MutationObserver(()=>{clearTimeout(mt);mt=setTimeout(tick,200);}).observe(D.body,{childList:true,subtree:true});
+})();
+</script><!--/tf10-->
 </body>
 </html>
