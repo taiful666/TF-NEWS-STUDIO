@@ -1,0 +1,10 @@
+# keep secrets and personal project files out of this public repo
+.env
+.env.*
+*.pem
+*.keystore
+*.jks
+keystore*.b64
+*.p12
+tf-project-*.json
+node_modules/
