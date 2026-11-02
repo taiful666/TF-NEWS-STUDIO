@@ -6058,11 +6058,11 @@ html[data-eff=light] .tf9pop{background:var(--s2)}
 .tf11key .opt{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--t2)}
 .tf11note{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--t2);line-height:1.65;padding:12px 14px;border-radius:12px;background:rgba(var(--acrgb),.07);margin-bottom:16px}
 .tf11note svg{flex:none;margin-top:2px;color:var(--act)}
-/* in-panel pointer to settings */
-.tf11ptr{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--inp);border:1px solid var(--bd);font-size:13px;color:var(--t2)}
-.tf11ptr .st{font-weight:700;color:var(--t3)}.tf11ptr .st.ok{color:var(--ok)}
-.tf11ptr button{margin-left:auto;height:32px!important;min-height:32px!important;padding:0 12px!important;border-radius:9px!important;font-size:12.5px!important}
-.tf11gone{display:none!important}
+/* in-panel pointer: only shown while a key is missing */
+.tf11ptr{display:flex}
+.tf11ptr button{width:100%;height:40px!important;min-height:40px!important;padding:0 14px!important;border-radius:11px!important;border:1px dashed var(--bd3)!important;background:transparent!important;color:var(--t2)!important;font-size:13.5px!important;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:none!important}
+.tf11ptr button:hover{color:var(--tx)!important;border-color:var(--ac)!important}
+html body.pro #tfPanel .tf11gone,html body.pro #tfPanel label.tf11gone,.tf11gone{display:none!important}
 /* calm mode */
 html.tf11calm *,html.tf11calm *::before,html.tf11calm *::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}
 @media(max-width:760px){
@@ -6210,7 +6210,7 @@ function drawData(){
 /* ---------- top bar: one gear, rarely used buttons tucked away ---------- */
 function topbar(){
   const btns=$('#tfTopBtns');if(!btns)return;
-  $$('.tbtn',btns).forEach(b=>{const t=b.dataset.tip||'';if(t==='নতুন'||t==='খুলুন')b.classList.add('tf11gone');});
+  $$('.tbtn',btns).forEach(b=>{if((b.dataset.tip||'')==='নতুন')b.classList.add('wide');});
   if(!$('#tf11Gear')){const g=D.createElement('button');g.id='tf11Gear';g.type='button';g.className='tbtn';g.dataset.tip='সেটিংস';g.setAttribute('aria-label','সেটিংস');g.setAttribute('aria-keyshortcuts','Control+Comma');g.innerHTML=ic('settings',18);g.onclick=()=>open('look');
     const pri=$('.tbtn.pri',btns);btns.insertBefore(g,pri||null);}
 }
@@ -6220,14 +6220,14 @@ const PTR=[['#ckey','claude'],['#gkey','gemini'],['#ttsGKey','gemini'],['#ttsCKe
 function pointers(){
   PTR.forEach(([sel,kid])=>{const inp=$(sel);if(!inp)return;const lab=inp.closest('label');if(!lab||lab.dataset.tf11)return;lab.dataset.tf11='1';lab.classList.add('tf11gone');
     const k=KEYS.find(x=>x.id===kid);const p=D.createElement('div');p.className='tf11ptr';p.dataset.k=kid;
-    p.innerHTML=`${ic('key-round',15)}<span>${k.name} কী: <span class="st"></span></span><button type="button">সেটিংসে</button>`;
+    p.innerHTML=`<button type="button">${ic('key-round',15)}<span>${k.name} কী যোগ করুন</span></button>`;
     lab.parentNode.insertBefore(p,lab);$('button',p).onclick=()=>open('keys');});
   // Cartesia extras now live in Settings
   const rem=$('#ttsRemember');if(rem){const l=rem.closest('label');if(l)l.classList.add('tf11gone');}
   const del=$('#ttsCDel');if(del)del.classList.add('tf11gone');
   refreshPtr();
 }
-function refreshPtr(){$$('.tf11ptr').forEach(p=>{const k=KEYS.find(x=>x.id===p.dataset.k);const h=k&&k.has();const s=$('.st',p);if(s){s.textContent=h?'✔ দেওয়া আছে':'নেই';s.classList.toggle('ok',h);}});}
+function refreshPtr(){$$('.tf11ptr').forEach(p=>{const k=KEYS.find(x=>x.id===p.dataset.k);p.style.display=(k&&k.has())?'none':'';});}
 
 /* ---------- hooks: palette + shortcut ---------- */
 (window.tf9Extra=window.tf9Extra||[]).push(
@@ -6242,5 +6242,132 @@ let mt=0;new MutationObserver(()=>{clearTimeout(mt);mt=setTimeout(tick,200);}).o
 setInterval(refreshPtr,3000);
 })();
 </script><!--/tf11-->
+<style id="tf12css">/* ===== TF News Studio — v8: minimal buttons, no helper text, per-news photo sections ===== */
+html body.pro #tfPanel .tf12gone,html body.pro #tfPanel label.tf12gone,.tf12gone{display:none!important}
+
+/* writing modes: just names */
+html body.pro #tfWR .wrm{gap:8px}
+html body.pro #tfWR .wrm button{min-height:46px;height:46px;padding:0 6px;justify-content:center}
+html body.pro #tfWR .wrm button small,html body.pro #tfWR .wrstep,html body.pro #tfWR .wrcur,html body.pro #tfWR #wrToGem,html body.pro #tfWR .wrkey small,html body.pro #tfWR .wrkey br{display:none!important}
+html body.pro #tfWR .wrm button b{font-size:13.5px;font-weight:600}
+html body.pro #tfWR .wrbox{gap:10px;padding:12px}
+html body.pro #tfWR .wrkey{margin:0 2px 12px!important;font-size:13.5px}
+/* labels never carry a second line of explanation */
+html body.pro #tfPanel small,html body.pro #tfPanel .keyst{display:none!important}
+html body.pro #tfPanel .tf9pop small{display:inline!important}
+/* quiet status lines */
+#vstatus.tf12gone,#vpOnHint.tf12gone,#musicName.tf12gone{display:none!important}
+
+/* "more" toggle */
+.tf12more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:4px;height:36px;border:0;border-radius:10px;background:transparent;color:var(--t3);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:color .18s,background .18s}
+.tf12more:hover{color:var(--tx);background:var(--hl)}
+.tf12more svg{transition:transform .25s var(--ease)}
+.sx.tf12adv .tf12more svg{transform:rotate(180deg)}
+.sx:not(.tf12adv) .tf12x{display:none!important}
+
+/* per-news photo sections */
+#tf12Gal{display:flex;flex-direction:column;gap:18px}
+.tf12s .tf12h{display:flex;align-items:baseline;gap:10px;margin:0 2px 9px;min-width:0}
+.tf12s .tf12h b{font-size:13px;font-weight:700;color:var(--tx);flex:none}
+.tf12s .tf12h span{font-size:12.5px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tf12g{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.tf12t{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--s3);border:1px solid var(--bd);animation:tf9up .3s var(--ease) both}
+.tf12t img,.tf12t video{width:100%;height:100%;object-fit:cover;display:block}
+.tf12t .vd{position:absolute;left:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center}
+html body.pro #tfPanel .tf12t button{position:absolute;top:5px;right:5px;width:24px;height:24px;min-height:24px;padding:0;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.8);transition:opacity .15s,transform .15s var(--ease),background .15s;box-shadow:none}
+.tf12t:hover button,.tf12t button:focus-visible{opacity:1;transform:none}
+html body.pro #tfPanel .tf12t button:hover{background:var(--ac);transform:scale(1.08)}
+@media(hover:none){html body.pro #tfPanel .tf12t button{opacity:1;transform:none}}
+.tf12a{aspect-ratio:1;border-radius:12px;border:1.5px dashed var(--bd3);display:flex;align-items:center;justify-content:center;color:var(--t3);cursor:pointer;transition:border-color .18s,color .18s,background .18s,transform .15s var(--ease)}
+.tf12a:hover{border-color:var(--ac);color:var(--act);background:rgba(var(--acrgb),.06);transform:translateY(-1px)}
+.tf12a input{display:none}
+.tf12old{align-self:flex-start;border:0;background:none;color:var(--t3);font:inherit;font-size:12.5px;cursor:pointer;padding:4px 2px;text-decoration:underline;text-underline-offset:3px}
+.tf12old:hover{color:var(--act)}
+html body.pro #tfWR .wrkey b,html body.pro #tfWR .wrstep b{color:var(--tx)!important;font-weight:600}
+
+#tf12Gal{margin-top:4px}
+</style><!--/tf12css-->
+<script id="tf12">/* ===================================================================
+   TF News Studio — v8: minimal & clean
+   - photos grouped per news, each with its own "+" (photos added there belong only to that news)
+   - advanced controls fold behind one quiet "আরও" button
+   - helper / status lines that only repeat what is already obvious are removed
+   =================================================================== */
+(()=>{'use strict';
+const D=document,$=(s,r)=>(r||D).querySelector(s),$$=(s,r)=>[...(r||D).querySelectorAll(s)];
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const ic=(n,s)=>`<svg width="${s||18}" height="${s||18}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${(typeof ICONS!=='undefined'&&ICONS[n])||''}"/></svg>`;
+const escH=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- photos per news ---------- */
+function gal(){
+  const box=$('#gallery');if(!box||typeof GALLERY==='undefined')return;
+  let host=$('#tf12Gal');if(!host){host=D.createElement('div');host.id='tf12Gal';box.parentNode.insertBefore(host,box);}
+  box.classList.add('tf12gone');
+  const fb=$('#galFiles');if(fb){const l=fb.closest('label');if(l)l.classList.add('tf12gone');}
+  const old=$('#galOld');if(old)old.classList.add('tf12gone');
+  const G=(typeof settings!=='undefined'&&Array.isArray(settings.newsGroups))?settings.newsGroups:[];
+  const secs=[];
+  const idxOf=f=>GALLERY.map((g,i)=>f(g)?i:-1).filter(i=>i>=0);
+  if(G.length){
+    G.forEach((gid,n)=>{const idx=idxOf(g=>g.group===gid);const it=idx.map(i=>GALLERY[i]).find(g=>g.query);
+      secs.push({gid,label:'খবর '+bn(n+1),title:it?it.query:'',idx});});
+    const gen=idxOf(g=>!g.group);if(gen.length)secs.push({gid:'',label:'সাধারণ',title:'',idx:gen});
+  }else secs.push({gid:'',label:'',title:'',idx:idxOf(()=>true)});
+  const oldN=G.length?GALLERY.filter(g=>g.group&&!G.includes(g.group)).length:0;
+  host.textContent='';
+  secs.forEach(sec=>{
+    const s=D.createElement('div');s.className='tf12s';
+    if(sec.label){const h=D.createElement('div');h.className='tf12h';h.innerHTML=`<b>${sec.label}</b><span></span>`;$('span',h).textContent=sec.title;$('span',h).title=sec.title;s.appendChild(h);}
+    const g=D.createElement('div');g.className='tf12g';
+    sec.idx.forEach(i=>{const it=GALLERY[i];if(!it)return;const t=D.createElement('div');t.className='tf12t';t.title=it.name||'';
+      t.innerHTML=(it.kind==='video'?`<video src="${escH(it.img.src)}" muted playsinline></video><span class="vd">${ic('play',11)}</span>`:`<img src="${escH(it.img.src)}" alt="">`)+`<button type="button" aria-label="মুছুন">×</button>`;
+      $('button',t).onclick=async()=>{GALLERY.splice(GALLERY.indexOf(it),1);await saveGallery();renderGallery();if(typeof scenes!=='undefined'&&scenes.length&&!(typeof LIVE!=='undefined'&&LIVE))build(true);};
+      g.appendChild(t);});
+    const a=D.createElement('label');a.className='tf12a';a.title=sec.label?sec.label+'-এর জন্য ছবি যোগ করুন':'ছবি যোগ করুন';a.setAttribute('role','button');
+    a.innerHTML=`${ic('plus',22)}<input type="file" multiple accept="image/*,video/*" aria-label="ছবি যোগ করুন">`;
+    $('input',a).onchange=async e=>{const files=[...e.target.files];e.target.value='';if(!files.length)return;await addGalleryFiles(files,sec.gid?{group:sec.gid}:{});if(typeof scenes!=='undefined'&&scenes.length)build(true);};
+    g.appendChild(a);s.appendChild(g);host.appendChild(s);});
+  if(oldN){const b=D.createElement('button');b.type='button';b.className='tf12old';b.textContent='আগের খবরের ছবি মুছুন ('+bn(oldN)+')';b.onclick=()=>{const o=$('#galOld');if(o)o.click();};host.appendChild(b);}
+}
+function hookGal(){
+  if(window.tf12hooked||typeof window.renderGallery!=='function')return;window.tf12hooked=1;
+  const _r=window.renderGallery;window.renderGallery=function(){const r=_r.apply(this,arguments);try{gal();}catch(e){}return r;};
+  gal();
+}
+
+/* ---------- advanced controls behind one "আরও" ---------- */
+function more(secEl,sels,key){
+  if(!secEl||secEl.dataset['tf12'+key])return;const targets=[];
+  sels.forEach(s=>{const e=$(s);if(!e)return;const t=e.closest('label')||e.closest('.settings')||e;targets.push(t);});
+  if(!targets.length)return;secEl.dataset['tf12'+key]='1';
+  targets.forEach(t=>t.classList.add('tf12x'));
+  const b=D.createElement('button');b.type='button';b.className='tf12more';b.innerHTML=`<span>আরও</span>${ic('chevron-down',16)}`;
+  b.onclick=()=>{const on=secEl.classList.toggle('tf12adv');b.firstChild.textContent=on?'কম':'আরও';};
+  secEl.querySelector('.sxb')?secEl.querySelector('.sxb').appendChild(b):secEl.appendChild(b);
+}
+function advanced(){
+  const v=$('#ttsGo');if(v){const sec=v.closest('.sx');
+    more(sec,['#ttsGModel','#ttsCVoiceId','#ttsCModel','#ttsCEmotion','#ttsCSpeed','#ttsGap'],'v');
+    const g=$('#ttsChGap');if(g){const t=g.closest('label');if(t)t.classList.add('tf12x');}}
+  const m=$('#tfPanel #musicVol');if(m){/* music pane is already short */}
+}
+
+/* ---------- small text clean-ups ---------- */
+function tidy(){
+  hookGal();
+  advanced();
+  // statuses that only say "nothing yet" disappear until they have something to say
+  [['#vstatus',/^এখনো কোনো ভয়েস নেই/],['#vpOnHint',/./],['#musicName',/./]].forEach(([s,re])=>{const e=$(s);if(e)e.classList.toggle('tf12gone',re.test((e.textContent||'').trim())||!(e.textContent||'').trim());});
+  // shorter labels
+  const raw=$('#rawText');if(raw){raw.placeholder='খবর পেস্ট করুন';const lab=raw.closest('label');if(lab&&!lab.dataset.tf12){lab.dataset.tf12='1';const tn=[...lab.childNodes].find(n=>n.nodeType===3&&n.nodeValue.trim());if(tn)tn.nodeValue='খবরের লেখা';}}
+  const ap=$('#autoPhoto');if(ap){const l=ap.closest('label');if(l&&!l.dataset.tf12){l.dataset.tf12='1';const tn=[...l.childNodes].find(n=>n.nodeType===3&&n.nodeValue.trim());if(tn)tn.nodeValue=' অটো বসান';}}
+  const wa=$('#wrAns');if(wa)wa.placeholder='জেমিনির উত্তর পেস্ট করুন';
+  const nb=$$('#tfPanel button').find(b=>/পত্রিকা থেকে খবর আনুন/.test(b.textContent));if(nb&&!nb.dataset.tf12){nb.dataset.tf12='1';}
+}
+tidy();setTimeout(tidy,600);setTimeout(tidy,2000);
+let mt=0;new MutationObserver(()=>{clearTimeout(mt);mt=setTimeout(tidy,200);}).observe(D.body,{childList:true,subtree:true,characterData:true});
+})();
+</script><!--/tf12-->
 </body>
 </html>
