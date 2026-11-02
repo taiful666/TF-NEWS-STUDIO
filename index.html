@@ -111,6 +111,7 @@ svg.ti{flex:none;vertical-align:middle}
 .tbtn.pri{background:var(--ac);border-color:var(--ac)}
 .tbtn.pri:hover{background:#cf2f13}
 #tfTop label.tbtn input{display:none}
+.tfSnd.off{color:#ff8a78!important}
 /* body */
 #tfBody{flex:1;display:flex;min-height:0}
 #tfRail{width:84px;flex:none;background:var(--surf);border-right:1px solid var(--bd);display:flex;flex-direction:column;align-items:stretch;padding:10px 6px;gap:4px;overflow-y:auto}
@@ -554,7 +555,7 @@ body.tf2 .srow .gear{background:#F4F1EC;border-radius:8px;height:34px;width:36px
   <div style="font-size:26px;font-weight:700">ভিডিও তৈরি হচ্ছে…</div>
   <div class="bar"><div id="exBar"></div></div><div id="exTxt" style="font-size:18px;opacity:.85"></div>
   <p style="opacity:.6;font-size:15px">এই ট্যাবটা খোলা রাখুন। শেষ হলে নিজে থেকেই ডাউনলোড হবে।</p>
-  <button class="ghost" style="color:#fff;border-color:#fff" id="exCancel">বাতিল</button>
+  <div style="display:flex;gap:10px;align-items:center;justify-content:center"><button class="tfSnd ghost" id="exSnd" style="color:#fff;border-color:#fff;width:48px;height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center"></button><button class="ghost" style="color:#fff;border-color:#fff" id="exCancel">বাতিল</button></div>
 </div>
 <div id="liveWrap"></div>
 <div class="ov hidden" id="liveStartOv"><div style="font-size:30px;font-weight:700;margin-bottom:10px">📡 লাইভ নিউজ উইন্ডো</div><div id="liveInfo" style="opacity:.8;margin-bottom:20px"></div><button class="red" id="liveGo" style="font-size:24px;padding:16px 34px">▶ লাইভ শুরু করুন</button><p style="opacity:.6;max-width:600px;text-align:center;line-height:1.6">শুরু করলে পুরো স্ক্রিন হবে। বের হতে Esc চাপুন। OBS দিয়ে এই উইন্ডো ক্যাপচার করে ফেসবুক/YouTube-এ লাইভ করুন।</p></div>
@@ -1565,9 +1566,9 @@ async function aiPlanOnly(){$('#rawText').dataset.skip='1';const keep=$('#rawTex
 
 /* ============ sound: SFX + music ============ */
 const audioEl=new Audio();const musicEl=new Audio();musicEl.loop=true;
-let hasAudio=false,hasMusic=false,actx=null,audioDest=null,master=null,sfxGain=null,musicGain=null,noiseBuf=null;
+let hasAudio=false,hasMusic=false,actx=null,audioDest=null,master=null,monGain=null,sfxGain=null,musicGain=null,noiseBuf=null;
 function ensureGraph(){
-  if(!actx){actx=new (window.AudioContext||window.webkitAudioContext)();audioDest=actx.createMediaStreamDestination();master=actx.createGain();master.connect(actx.destination);master.connect(audioDest);
+  if(!actx){actx=new (window.AudioContext||window.webkitAudioContext)();audioDest=actx.createMediaStreamDestination();master=actx.createGain();monGain=actx.createGain();master.connect(monGain);monGain.connect(actx.destination);master.connect(audioDest);
     const vsrc=actx.createMediaElementSource(audioEl);analyser=actx.createAnalyser();analyser.fftSize=1024;anBuf=new Float32Array(analyser.fftSize);vsrc.connect(analyser);analyser.connect(master);musicGain=actx.createGain();actx.createMediaElementSource(musicEl).connect(musicGain).connect(master);sfxGain=actx.createGain();sfxGain.connect(master);}
   if(actx.state==='suspended')actx.resume();sfxGain.gain.value=settings.sfxVol;musicGain.gain.value=settings.musicVol*(hasAudio?.45:1);
 }
@@ -3041,7 +3042,7 @@ function nwRender(){
   $('#nwMore').classList.toggle('hidden',L.length<=NW.shown);NW.view=L;nwBasketBar();
 }
 function nwBasketBar(){const n=NW.basket.length;$('#nwBasket').classList.toggle('hidden',!n);$('#nwBasketN').textContent=toBn(n)+'টি খবর ঝুড়িতে';}
-function nwToggleBasket(it){const k=nwKey(it.link);const i=NW.basket.findIndex(b=>nwKey(b.link)===k);if(i>=0)NW.basket.splice(i,1);else{if(NW.basket.length>=8){alert('একটা বুলেটিনে সর্বোচ্চ ৮টি খবর রাখা যায়।');return;}NW.basket.push({title:it.title,link:it.link,img:it.img||'',desc:(it.desc||'').slice(0,400),srcName:it.srcName||'',text:it.text||''});}nwSave();nwRender();nwRenderBasketList();}
+function nwToggleBasket(it){const k=nwKey(it.link);const i=NW.basket.findIndex(b=>nwKey(b.link)===k);if(i>=0)NW.basket.splice(i,1);else{if(NW.basket.length>=30){alert('একটা বুলেটিনে সর্বোচ্চ ৩০টি খবর রাখা যায়।');return;}NW.basket.push({title:it.title,link:it.link,img:it.img||'',desc:(it.desc||'').slice(0,400),srcName:it.srcName||'',text:it.text||''});}nwSave();nwRender();nwRenderBasketList();}
 
 /* ---------- sheet ---------- */
 function nwOpenSheet(it){NW.cur=it;const s=$('#nwSheet');
@@ -3323,6 +3324,12 @@ tick=function(ts){step(ts);requestAnimationFrame(tick);};
 try{const wk=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'],{type:'text/javascript'})));
   wk.onmessage=()=>{if(D.hidden&&(playing||exporting))step(performance.now());};}catch(e){}
 
+/* ---------------- export sound: listen or silent (video file always keeps its audio) ---------------- */
+function tfMon(){try{if(monGain)monGain.gain.value=(exporting&&settings.exMute)?0:1;}catch(e){}
+  document.querySelectorAll('.tfSnd').forEach(b=>{const m=!!settings.exMute;b.classList.toggle('off',m);b.setAttribute('aria-pressed',m?'true':'false');b.title=m?'সাউন্ড বন্ধ — চালু করতে চাপুন':'সাউন্ড চালু — বন্ধ করতে চাপুন';b.innerHTML=m?TF_SPK_OFF:TF_SPK_ON;});}
+const TF_SPK_ON='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>';
+const TF_SPK_OFF='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>';
+function tfSndToggle(){settings.exMute=!settings.exMute;try{save();}catch(e){}tfMon();}
 /* ---------------- export ---------------- */
 exportVideo=async function(){
   if(!scenes.length){alert('আগে স্ক্রিপ্ট লিখে "দৃশ্য বানান" চাপুন।');return;}
@@ -3333,9 +3340,9 @@ exportVideo=async function(){
   let rec;try{rec=new MediaRecorder(new MediaStream(tracks),Object.assign({videoBitsPerSecond:settings.res==720?5e6:9e6,audioBitsPerSecond:160000},mime?{mimeType:mime}:{}));}
   catch(e){alert('ভিডিও রেকর্ডার চালু করা যায়নি: '+e.message);return;}
   const parts=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)parts.push(e.data);};let cancelled=false;
-  const ex={done:false,finish(){if(ex.done)return;ex.done=true;setTimeout(()=>{try{rec.stop();}catch(e){}},450);}};exporting=ex;
+  const ex={done:false,finish(){if(ex.done)return;ex.done=true;setTimeout(()=>{try{rec.stop();}catch(e){}},450);}};exporting=ex;tfMon();
   const guard=setInterval(()=>{if(exporting!==ex){clearInterval(guard);return;}if(!playing&&T>=total-.01)ex.finish();},1000);
-  rec.onstop=()=>{clearInterval(guard);exporting=null;audioEl.pause();musicEl.pause();$('#exOv').classList.add('hidden');if(cancelled)return;
+  rec.onstop=()=>{clearInterval(guard);exporting=null;tfMon();audioEl.pause();musicEl.pause();$('#exOv').classList.add('hidden');if(cancelled)return;
     const ext=(rec.mimeType||mime).includes('mp4')?'mp4':'webm';const blob=new Blob(parts,{type:rec.mimeType||mime||'video/webm'});
     const a=D.createElement('a');a.href=URL.createObjectURL(blob);
     a.download=(settings.brand||'TF-News').replace(/[^\wঀ-৿-]+/g,'-')+'-'+settings.aspect.replace(':','x')+'-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+ext;
@@ -3377,7 +3384,9 @@ tb(ico('newspaper',17)+'পত্রিকা থেকে খবর','',()=>$('
 tb(ico('refresh-cw',16)+'নতুন','',()=>{const f=D.querySelector('header .freshStart');if(f)f.click();else if(typeof freshStart==='function')freshStart();});
 {const l=D.createElement('label');l.className='tbtn';l.title='আগে সেভ করা প্রজেক্ট (.json) খুলুন';l.innerHTML=ico('folder-open',17)+'খুলুন';l.appendChild($('#projOpen'));top.appendChild(l);}
 tb(ico('save',16)+'সেভ','',()=>$('#projSave').click()).title='প্রজেক্ট ফাইল হিসেবে সেভ করুন';
+{const sb=tb('','tfSnd',tfSndToggle);sb.style.cssText='padding:0;width:40px;justify-content:center';}
 tb(ico('download',17)+'ভিডিও ডাউনলোড','pri',()=>exportVideo());
+$('#exSnd').onclick=tfSndToggle;tfMon();
 
 const PANES=[
  ['news','newspaper','খবর','খবর','পত্রিকা থেকে খবর আনুন বা লেখা পেস্ট করুন। চাইলে AI দিয়ে ছোট আর পরিষ্কার করে লিখিয়ে নিন।'],
@@ -4451,6 +4460,13 @@ try{window.tfWrUI&&window.tfWrUI();}catch(e){}
 #tfCap .capb{min-height:44px;border-radius:22px;border:1px solid #ECE7DF;background:#fff;color:#17171A;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 12px}
 #tfCap .capb.pri{background:#E5391B;border-color:#E5391B;color:#fff}
 .capok{font-size:13px;color:#1D6B33;margin-top:8px;line-height:1.5}
+.capseg{display:flex;gap:4px;padding:4px;background:rgba(127,127,127,.16);border-radius:14px;margin-bottom:12px}
+#tfCap .capseg button{flex:1;min-height:40px;border:0!important;border-radius:11px;background:transparent!important;font:inherit;font-size:15px;font-weight:600;color:inherit;opacity:.7;cursor:pointer;box-shadow:none;transition:background .15s,color .15s,opacity .15s}
+#tfCap .capseg button.on{background:#E5391B!important;color:#fff!important;opacity:1}
+#tfCap .ytf{display:grid;grid-template-columns:1fr auto;grid-template-areas:"l c" "f f";align-items:center;gap:4px 8px;margin-bottom:12px}
+#tfCap .ytf label{grid-area:l;font-size:13px;font-weight:600;opacity:.75;margin:0}
+#tfCap .ytf input,#tfCap .ytf textarea{grid-area:f;width:100%;box-sizing:border-box;font-family:inherit;line-height:1.5}
+#tfCap .ytf .ytc{grid-area:c;height:30px;min-height:0;padding:0 14px;border-radius:15px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 </style>
 <script id="tf6">/* ===================================================================
    TF News Studio — ready-to-paste caption for Facebook / YouTube
@@ -4469,17 +4485,31 @@ function localCaption(){
   const body=scenes.filter(s=>!s.special&&!s.isChapter&&!s.headBlock).map(s=>cl(s.text));
   const th=settings.th&&settings.th.ai;const main=cl((th&&th.main)||ch[0]||body[0]||'আজকের খবর');
   const out=['🔴 '+((ch.length>1&&!(th&&th.main))?'এই মুহূর্তের প্রধান খবরগুলো':main)];
-  if(ch.length>1){out.push('');ch.forEach((h,i)=>out.push(['১️⃣','২️⃣','৩️⃣','৪️⃣','৫️⃣','৬️⃣','৭️⃣','৮️⃣'][i]?(['১','২','৩','৪','৫','৬','৭','৮'][i]+'. '+h):'• '+h));}
+  if(ch.length>1){out.push('');ch.forEach((h,i)=>out.push((typeof toBn==='function'?toBn(i+1):String(i+1))+'. '+h));}
   else{const s=body.slice(0,2).join(' ');if(s){out.push('');out.push(shortText(s,220));}}
   out.push('');out.push('বিস্তারিত দেখুন ভিডিওতে 👆 নিয়মিত খবর পেতে পেজটি ফলো করুন।');
   const tags=new Set(['#খবর','#বাংলা_খবর','#BanglaNews']);if(settings.brand)tags.add('#'+cl(settings.brand).replace(/\s+/g,''));
   ch.slice(0,3).forEach(h=>{const w=h.split(' ').filter(x=>x.length>2)[0];if(w)tags.add('#'+w.replace(/[^ঀ-৿A-Za-z0-9]/g,''));});
   out.push('');out.push([...tags].filter(t=>t.length>1).join(' '));return out.join('\n');}
-function caption(){const c=settings.cap;if(c&&c.text&&c.key===key())return c.text;return localCaption();}
+function fbCaption(){const c=settings.cap;if(c&&c.text&&c.key===key())return c.text;return localCaption();}
+/* ---- YouTube: thumbnail text, title, description, tags ---- */
+function localYT(){
+  const ch=scenes.filter(s=>s.isChapter&&!s.special&&!isHead(s)).map(s=>cl(s.text)).filter(Boolean);
+  const body=scenes.filter(s=>!s.special&&!s.isChapter&&!s.headBlock).map(s=>cl(s.text));
+  const th=settings.th&&settings.th.ai;const main=cl((th&&th.main)||ch[0]||body[0]||'আজকের খবর');
+  const title=(ch.length>1?main+' | আজকের প্রধান খবর':main).slice(0,95);
+  const d=[];if(ch.length>1){d.push('এই ভিডিওতে:');ch.forEach((h,i)=>d.push((typeof toBn==='function'?toBn(i+1):i+1)+'. '+h));}else{const x=body.slice(0,3).join(' ');if(x)d.push(shortText(x,400));}
+  d.push('');d.push('নিয়মিত খবর পেতে চ্যানেলটি সাবস্ক্রাইব করুন ও বেল আইকন চাপুন।');
+  const tags=['খবর','বাংলা খবর','Bangla News','আজকের খবর'];if(settings.brand)tags.push(cl(settings.brand));ch.slice(0,4).forEach(h=>tags.push(h.split(' ').slice(0,3).join(' ')));
+  return{thumb:main,title:title,desc:d.join('\n'),tags:[...new Set(tags)].join(', ')};}
+function ytData(){const c=settings.capYT;const l=localYT();if(c&&c.key===key())return Object.assign({},l,c);return l;}
+function ytText(){const y=ytData();return 'থাম্বনেইলে লেখা:\n'+y.thumb+'\n\nটাইটেল:\n'+y.title+'\n\nডেসক্রিপশন:\n'+y.desc+'\n\nট্যাগ:\n'+y.tags;}
+function curPl(){return settings.capPl==='yt'?'yt':'fb';}
+function caption(){return curPl()==='yt'?ytText():fbCaption();}
 // AI writes the caption together with the script
 {const _bp=buildScriptPrompt;buildScriptPrompt=function(raw){let p=_bp(raw);
-  p=p.replace('RULES:','RULES:\n- Also write "caption": a ready-to-post Facebook/YouTube caption in Bangla — 1 catchy first line (faithful to the facts, no fake clickbait), then 2-4 short lines with the key facts (one line per story for a bulletin), then a line inviting people to follow the page, then 5-8 relevant hashtags. Put it in the JSON as "caption":"..." (use \\n for new lines).');return p;};}
-{const _as=applyScriptObj;applyScriptObj=function(j){const r=_as.apply(this,arguments);try{if(j&&typeof j.caption==='string'&&j.caption.trim()){setTimeout(()=>{settings.cap={text:j.caption.trim(),key:key()};try{save();}catch(e){}capUI();},250);}}catch(e){}return r;};}
+  p=p.replace('RULES:','RULES:\n- Also write "caption": a ready-to-post Facebook/YouTube caption in Bangla — 1 catchy first line (faithful to the facts, no fake clickbait), then 2-4 short lines with the key facts (one line per story for a bulletin), then a line inviting people to follow the page, then 5-8 relevant hashtags. Put it in the JSON as "caption":"..." (use \\n for new lines). Also add "yt":{"title":"<YouTube title, max 90 chars, strong but 100% faithful>","desc":"<YouTube description: 2-3 sentence summary, then the stories as a short list, then a subscribe line, then 3-5 hashtags; use \\n for new lines>","tags":["<8-15 YouTube search tags in Bangla and English>"]}. The "caption" is for Facebook (emoji friendly, 5-8 hashtags); "yt" is for YouTube (the thumbnail text is already in "thumb").');return p;};}
+{const _as=applyScriptObj;applyScriptObj=function(j){const r=_as.apply(this,arguments);try{if(j&&typeof j.caption==='string'&&j.caption.trim()){setTimeout(()=>{settings.cap={text:j.caption.trim(),key:key()};try{save();}catch(e){}capUI();},250);}if(j&&j.yt&&typeof j.yt==='object'){setTimeout(()=>{const y=j.yt,o={key:key()};if(y.title)o.title=cl(y.title);if(typeof y.desc==='string'&&y.desc.trim())o.desc=y.desc.trim();if(Array.isArray(y.tags)&&y.tags.length)o.tags=y.tags.map(cl).filter(Boolean).join(', ');else if(typeof y.tags==='string'&&y.tags.trim())o.tags=y.tags.trim();settings.capYT=o;try{save();}catch(e){}capUI();},260);}}catch(e){}return r;};}
 // copy
 async function copyCap(t){t=t==null?$('#capText').value:t;
   if(APP&&Android.copyText){try{if(Android.copyText(t))return true;}catch(e){}}try{await navigator.clipboard.writeText(t);return true;}catch(e){}
@@ -4487,16 +4517,29 @@ async function copyCap(t){t=t==null?$('#capText').value:t;
 /* ---------- UI ---------- */
 const box=D.createElement('div');box.id='tfCap';
 box.innerHTML=(MOB?'<h2 class="sec">পোস্টের ক্যাপশন</h2><div class="group"><div class="row col capbox">':'<div class="capbox">')+
- `<textarea id="capText" rows="7" aria-label="ক্যাপশন"></textarea>
- <div class="caprow"><button class="capb pri" id="capCopy">📋 ক্যাপশন কপি</button><button class="capb" id="capNew">↻ খবর থেকে নতুন</button></div>
+ `<div class="capseg" role="tablist"><button type="button" id="capTabFb" data-pl="fb">ফেসবুক</button><button type="button" id="capTabYt" data-pl="yt">ইউটিউব</button></div>
+ <div id="capFb"><textarea id="capText" rows="7" aria-label="ফেসবুক ক্যাপশন"></textarea></div>
+ <div id="capYt" class="hidden">
+  <div class="ytf"><label>থাম্বনেইলে লেখা</label><input id="ytThumb" type="text"><button type="button" class="ytc" data-k="ytThumb">কপি</button></div>
+  <div class="ytf"><label>টাইটেল</label><input id="ytTitle" type="text"><button type="button" class="ytc" data-k="ytTitle">কপি</button></div>
+  <div class="ytf"><label>ডেসক্রিপশন</label><textarea id="ytDesc" rows="6"></textarea><button type="button" class="ytc" data-k="ytDesc">কপি</button></div>
+  <div class="ytf"><label>ট্যাগ</label><textarea id="ytTags" rows="2"></textarea><button type="button" class="ytc" data-k="ytTags">কপি</button></div>
+ </div>
+ <div class="caprow"><button class="capb pri" id="capCopy">সব কপি</button><button class="capb" id="capNew">খবর থেকে নতুন</button></div>
  <div class="capok hidden" id="capOk"></div>`+(MOB?'</div></div><p class="hint">ভিডিও সেভ হলে আর "শেয়ার" চাপলে ক্যাপশন নিজে থেকেই কপি হয়ে থাকবে — Facebook/YouTube-এ লেখার ঘরে শুধু পেস্ট করুন। চাইলে এখানে বদলে নিন।</p>':'</div>');
 if(MOB){const g=$('#exThCv')&&$('#exThCv').closest('.group');(g||D.querySelector('#s-export .scroll .group')).after(box);}
-else{const pane=$('#thDl')&&$('#thDl').closest('.tfPane');if(pane){const s=D.createElement('section');s.className='sx';s.innerHTML='<div class="sxh"><h3>পোস্টের ক্যাপশন</h3><p>Facebook/YouTube-এ ভিডিওর সাথে দেওয়ার লেখা — কপি করে পেস্ট করুন।</p></div><div class="sxb"></div>';s.querySelector('.sxb').appendChild(box);const foot=pane.querySelector('.pfoot');pane.insertBefore(s,foot||null);}else D.body.appendChild(box);}
-function capUI(){const t=$('#capText');if(D.activeElement===t)return;t.value=caption();}
+else{const pane=$('#thDl')&&$('#thDl').closest('.tfPane');if(pane){const s=D.createElement('section');s.className='sx';s.innerHTML='<div class="sxh"><h3>পোস্টের ক্যাপশন</h3></div><div class="sxb"></div>';s.querySelector('.sxb').appendChild(box);const foot=pane.querySelector('.pfoot');pane.insertBefore(s,foot||null);}else D.body.appendChild(box);}
+function capUI(){const pl=curPl();$('#capTabFb').classList.toggle('on',pl==='fb');$('#capTabYt').classList.toggle('on',pl==='yt');$('#capFb').classList.toggle('hidden',pl!=='fb');$('#capYt').classList.toggle('hidden',pl!=='yt');
+  if(pl==='fb'){const t=$('#capText');if(D.activeElement!==t)t.value=fbCaption();}
+  else{const y=ytData();[['ytThumb','thumb'],['ytTitle','title'],['ytDesc','desc'],['ytTags','tags']].forEach(([id,k])=>{const e=$('#'+id);if(D.activeElement!==e)e.value=y[k]||'';});}}
 $('#capText').addEventListener('input',e=>{settings.cap={text:e.target.value,key:key()};try{save();}catch(er){}});
-$('#capNew').onclick=()=>{settings.cap=null;try{save();}catch(e){}$('#capText').value=localCaption();};
+function ytSave(){settings.capYT={thumb:$('#ytThumb').value,title:$('#ytTitle').value,desc:$('#ytDesc').value,tags:$('#ytTags').value,key:key()};try{save();}catch(e){}}
+['ytThumb','ytTitle','ytDesc','ytTags'].forEach(id=>$('#'+id).addEventListener('input',ytSave));
+[$('#capTabFb'),$('#capTabYt')].forEach(b=>b.onclick=()=>{settings.capPl=b.dataset.pl;try{save();}catch(e){}capUI();});
+D.querySelectorAll('#tfCap .ytc').forEach(b=>b.onclick=async()=>{const ok=await copyCap($('#'+b.dataset.k).value);say(ok?'✔ কপি হয়েছে':'কপি হয়নি');});
+$('#capNew').onclick=()=>{if(curPl()==='yt')settings.capYT=null;else settings.cap=null;try{save();}catch(e){}capUI();};
 const say=m=>{const o=$('#capOk');o.textContent=m;o.classList.remove('hidden');clearTimeout(o._t);o._t=setTimeout(()=>o.classList.add('hidden'),4000);};
-$('#capCopy').onclick=async()=>{say(await copyCap()?'✔ ক্যাপশন কপি হয়েছে — পোস্টের লেখার ঘরে পেস্ট করুন।':'কপি হয়নি — লেখাটা চেপে ধরে নিজে কপি করুন।');};
+$('#capCopy').onclick=async()=>{say(await copyCap(caption())?'✔ কপি হয়েছে — পোস্টের লেখার ঘরে পেস্ট করুন।':'কপি হয়নি — লেখাটা চেপে ধরে নিজে কপি করুন।');};
 setInterval(()=>{if(!MOB||D.querySelector('#s-export.on'))capUI();},3000);setTimeout(capUI,800);
 if(MOB&&typeof go==='function'){const _go=go;go=function(id,push){_go(id,push);if(id==='export')setTimeout(capUI,40);};}
 /* ---------- phone: copy on save, share with caption ---------- */
