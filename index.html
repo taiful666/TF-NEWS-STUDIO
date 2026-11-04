@@ -487,7 +487,7 @@ body.tf2 .srow .gear{background:#F4F1EC;border-radius:8px;height:34px;width:36px
   <div class="chips" id="nwChips"></div>
   <div id="nwList" class="nwlist"></div>
   <button class="ghost small hidden" id="nwMore" style="margin:12px auto;display:block">আরও খবর দেখুন</button>
-  <p class="hint">খবরে ক্লিক করুন → "এই খবর দিয়ে ভিডিও বানান"। ＋ চেপে কয়েকটা খবর ঝুড়িতে রাখলে একসাথে বুলেটিন হবে।</p>
+  <p class="hint">খবরে চাপ দিলেই বাছাই হবে (যে ক্রমে বাছবেন, ভিডিওতে সেই ক্রমে আসবে)। 👁 চাপলে বিস্তারিত।</p>
  </div>
  <div class="nwscroll hidden" id="nwPapers">
   <label class="chk" style="display:none"><input type="checkbox" id="nwAd"> বিজ্ঞাপন বন্ধ</label>
@@ -501,7 +501,7 @@ body.tf2 .srow .gear{background:#F4F1EC;border-radius:8px;height:34px;width:36px
   <h4>আমার পত্রিকা</h4><div class="papers" id="ppMy"></div>
   <div style="display:flex;gap:8px;margin-top:10px"><input id="ppName" type="text" placeholder="পত্রিকার নাম" style="flex:1"><input id="ppUrl" type="text" placeholder="লিংক" style="flex:1"><button class="ghost small" id="ppAdd">＋ যোগ করুন</button></div>
  </div>
- <div class="basket hidden" id="nwBasket"><b id="nwBasketN"></b><button class="g" id="nwBShow">দেখুন</button><button class="g" id="nwBClear">খালি</button><button class="p" id="nwBUse">বুলেটিন বানান</button></div>
+ <div class="basket hidden" id="nwBasket"><b id="nwBasketN"></b><button class="g" id="nwBShow">দেখুন</button><button class="g" id="nwBClear">খালি</button><button class="p" id="nwBUse">ভিডিও বানান</button></div>
  <div class="sheet hidden" id="nwSheet"><div class="sb"><div id="nwsImg"></div><div id="nwsTitle"></div><div id="nwsMeta"></div><div id="nwsDesc"></div>
   <div class="acts"><button class="red" id="nwsUse">🎬 এই খবর দিয়ে ভিডিও বানান</button><button class="ghost" id="nwsBasket"></button><button class="ghost" id="nwsOpen">↗ পত্রিকায় পুরোটা পড়ুন</button><button class="ghost" id="nwsClose">বন্ধ করুন</button></div></div></div>
  <div class="sheet hidden" id="nwBSheet"><div class="sb"><h4 style="margin-top:0">বুলেটিনের ঝুড়ি</h4><div id="nwBList"></div><button class="ghost" id="nwBDone" style="margin-top:12px">ঠিক আছে</button></div></div>
@@ -3034,14 +3034,15 @@ function nwStatTxt(){if(!NW.updated)return;const n=NW.items.filter(x=>x.fresh).l
 function nwChips(){const cnt={};NW.items.forEach(x=>cnt[x.src]=(cnt[x.src]||0)+1);const ids=Object.keys(NW_SRC).filter(id=>cnt[id]);
   $('#nwChips').innerHTML=[['all','সব']].concat(ids.map(id=>[id,NW_SRC[id]])).map(([id,n])=>`<button data-s="${id}" class="${NW.src===id?'on':''}">${esc(n)}</button>`).join('');}
 function nwFiltered(){const q=($('#nwQ').value||'').trim().toLowerCase();return NW.items.filter(x=>(NW.src==='all'||x.src===NW.src)&&(!q||x.title.toLowerCase().includes(q)||x.desc.toLowerCase().includes(q)));}
+function nwBasketPos(link){const k=nwKey(link);return NW.basket.findIndex(b=>nwKey(b.link)===k)+1;}
 function nwInBasket(link){const k=nwKey(link);return NW.basket.some(b=>nwKey(b.link)===k);}
 function nwRender(){
   nwStatTxt();const L=nwFiltered();const box=$('#nwList');
   if(!L.length){box.innerHTML=`<p class="hint" style="text-align:center;margin:40px 0">${NW.items.length?'এই খোঁজে কোনো খবর নেই':'খবর লোড হচ্ছে…'}</p>`;$('#nwMore').classList.add('hidden');return;}
-  box.innerHTML=L.slice(0,NW.shown).map((x,i)=>`<div class="nwi" data-i="${i}">${x.img?`<img loading="lazy" src="${esc(nwProx(x.img,240))}" data-raw="${esc(x.img)}" onerror="if(this.dataset.raw&&this.src!==this.dataset.raw){this.src=this.dataset.raw;this.dataset.raw=''}else{this.replaceWith(Object.assign(document.createElement('span'),{className:'ph'}))}">`:'<span class="ph"></span>'}<div class="t"><b>${esc(x.title)}</b><small>${x.fresh?'<i class="new">নতুন</i>':''}${esc(x.srcName)} · ${nwAgo(x.date)}</small></div><button class="bk${nwInBasket(x.link)?' on':''}" aria-label="ঝুড়িতে রাখুন">${ICO(nwInBasket(x.link)?'check':'plus')}</button></div>`).join('');
+  box.innerHTML=L.slice(0,NW.shown).map((x,i)=>`<div class="nwi${nwInBasket(x.link)?' sel':''}" data-i="${i}">${x.img?`<img loading="lazy" src="${esc(nwProx(x.img,240))}" data-raw="${esc(x.img)}" onerror="if(this.dataset.raw&&this.src!==this.dataset.raw){this.src=this.dataset.raw;this.dataset.raw=''}else{this.replaceWith(Object.assign(document.createElement('span'),{className:'ph'}))}">`:'<span class="ph"></span>'}<div class="t"><b>${esc(x.title)}</b><small>${x.fresh?'<i class="new">নতুন</i>':''}${esc(x.srcName)} · ${nwAgo(x.date)}</small></div><button class="eye" type="button" aria-label="বিস্তারিত দেখুন" title="বিস্তারিত দেখুন"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="bk${nwInBasket(x.link)?' on':''}" aria-label="বাছাই করুন">${nwInBasket(x.link)?toBn(nwBasketPos(x.link)):ICO('plus')}</button></div>`).join('');
   $('#nwMore').classList.toggle('hidden',L.length<=NW.shown);NW.view=L;nwBasketBar();
 }
-function nwBasketBar(){const n=NW.basket.length;$('#nwBasket').classList.toggle('hidden',!n);$('#nwBasketN').textContent=toBn(n)+'টি খবর ঝুড়িতে';}
+function nwBasketBar(){const n=NW.basket.length;$('#nwBasket').classList.toggle('hidden',!n);$('#nwBasketN').textContent=toBn(n)+'টি খবর বাছাই';}
 function nwToggleBasket(it){const k=nwKey(it.link);const i=NW.basket.findIndex(b=>nwKey(b.link)===k);if(i>=0)NW.basket.splice(i,1);else{if(NW.basket.length>=30){alert('একটা বুলেটিনে সর্বোচ্চ ৩০টি খবর রাখা যায়।');return;}NW.basket.push({title:it.title,link:it.link,img:it.img||'',desc:(it.desc||'').slice(0,400),srcName:it.srcName||'',text:it.text||''});}nwSave();nwRender();nwRenderBasketList();}
 
 /* ---------- sheet ---------- */
@@ -3112,7 +3113,7 @@ $('#nwRefresh').onclick=()=>nwLoad(true);
 $('#nwQ').addEventListener('input',()=>{NW.shown=40;nwRender();});
 $('#nwChips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;NW.src=b.dataset.s;nwSave();NW.shown=40;nwChips();nwRender();b.scrollIntoView&&b.scrollIntoView({inline:'center',block:'nearest'});});
 $('#nwMore').onclick=()=>{NW.shown+=40;nwRender();};
-$('#nwList').addEventListener('click',e=>{const row=e.target.closest('.nwi');if(!row)return;const it=NW.view[+row.dataset.i];if(e.target.closest('.bk')){nwToggleBasket(it);return;}nwOpenSheet(it);});
+$('#nwList').addEventListener('click',e=>{const row=e.target.closest('.nwi');if(!row)return;const it=NW.view[+row.dataset.i];if(e.target.closest('.eye')){nwOpenSheet(it);return;}nwToggleBasket(it);});
 $('#nwsClose').onclick=nwCloseSheet;$('#nwSheet').addEventListener('click',e=>{if(e.target.id==='nwSheet')nwCloseSheet();});
 $('#nwsUse').onclick=()=>NW.cur&&nwUse([NW.cur]);
 $('#nwsBasket').onclick=()=>{if(!NW.cur)return;nwToggleBasket(NW.cur);nwOpenSheet(NW.cur);};
@@ -5515,6 +5516,202 @@ html body .ov button.ghost{background:rgba(255,255,255,.08)!important;color:#fff
 html body .ov button.ghost:hover{background:rgba(255,255,255,.16)!important}
 html body .ov button:active{transform:scale(.97)}
 </style><!--/tf9css-->
+<script id="tfTopic">
+/* ===== TF smart topic search — shared by TF FB Reels & Post Maker and TF News Studio =====
+   Type one word (ইসরায়েল / Iran / যুক্তরাষ্ট্র / মধ্যপ্রাচ্য / চট্টগ্রাম …) and every story about it,
+   about the people and places tied to it, and about the closely linked topics is found.
+   Spelling differences (ইসরায়েল / ইসরাইল, ঈ/ই, ণ/ন, শ/ষ/স …) and word endings (‑এর, ‑কে, ‑তে, ‑ি …) don't matter.
+   Tiers: 3 = the topic itself · 2 = its people / places / members · 1 = linked topics */
+(function(){
+'use strict';
+if(window.TFTopic)return;
+/* id:label | names (the topic itself) | core (people, places, groups inside it) | related topic ids | member topic ids (regions) */
+const DATA=`
+israel:ইসরায়েল|ইসরায়েল,ইসরাইল,ইসরাঈল,ইজরায়েল,ইহুদি রাষ্ট্র,israel,israeli|নেতানিয়াহু,নেতানিয়াহু,তেল আবিব,জেরুজালেম,জেরুসালেম,আইডিএফ,মোসাদ,জায়নবাদী,জায়োনিস্ট,ইহুদিবাদী,আয়রন ডোম,নেসেট,হাইফা,netanyahu,tel aviv,jerusalem,idf,mossad,zionist|palestine iran lebanon syria yemen middleeast|
+palestine:ফিলিস্তিন|ফিলিস্তিন,ফিলিস্তিনি,প্যালেস্টাইন,গাজা,palestine,palestinian,gaza|হামাস,পশ্চিম তীর,রাফাহ,রাফা,খান ইউনিস,আল-আকসা,আল আকসা,আল-আকসা,ইউএনআরডব্লিউএ,ত্রাণ বহর,ফ্লোটিলা,হানিয়া,সিনওয়ার,hamas,west bank,rafah,al-aqsa,unrwa,flotilla|israel middleeast egypt|
+iran:ইরান|ইরান,ইরানি,তেহরান,iran,iranian,tehran|খামেনি,খামেনেই,পেজেশকিয়ান,আরাঘচি,রাইসি,রেভল্যুশনারি গার্ড,বিপ্লবী গার্ড,আইআরজিসি,হরমুজ,ইসফাহান,ফোরদো,নাতাঞ্জ,khamenei,pezeshkian,araghchi,irgc,hormuz|israel middleeast iraq lebanon yemen syria|
+middleeast:মধ্যপ্রাচ্য|মধ্যপ্রাচ্য,মধ্য প্রাচ্য,আরব বিশ্ব,আরব দেশ,উপসাগরীয়,পারস্য উপসাগর,middle east,gulf states,arab world|ওপেক,আরব লিগ,opec,arab league|war|israel palestine iran iraq syria lebanon yemen saudi uae qatar kuwait oman bahrain jordan egypt turkey
+lebanon:লেবানন|লেবানন,লেবাননি,বৈরুত,lebanon,lebanese,beirut|হিজবুল্লাহ,হিজবুল্লা,hezbollah|israel iran syria middleeast|
+syria:সিরিয়া|সিরিয়া,সিরীয়,দামেস্ক,syria,syrian,damascus|আল-শারা,আহমেদ আল শারা,জোলানি,আসাদ,আলেপ্পো,ইদলিব,assad,aleppo|israel turkey iran middleeast|
+iraq:ইরাক|ইরাক,ইরাকি,বাগদাদ,iraq,iraqi,baghdad|কুর্দিস্তান,ইরবিল,মসুল,বসরা,kurdistan|iran middleeast|
+yemen:ইয়েমেন|ইয়েমেন,ইয়ামেন,ইয়েমেনি,yemen,yemeni|হুতি,হুথি,হাউছি,লোহিত সাগর,এডেন,houthi,houthis,red sea|saudi iran israel middleeast|
+saudi:সৌদি আরব|সৌদি আরব,সৌদি,রিয়াদ,saudi,riyadh|মক্কা,মদিনা,বিন সালমান,এমবিএস,আরামকো,হজ,উমরাহ,জেদ্দা,mecca,makkah,medina,aramco,jeddah|middleeast uae qatar yemen|
+uae:সংযুক্ত আরব আমিরাত|সংযুক্ত আরব আমিরাত,আরব আমিরাত,আমিরাত,ইউএই,দুবাই,আবুধাবি,uae,emirates,dubai,abu dhabi|শারজাহ,sharjah|middleeast saudi|
+qatar:কাতার|কাতার,কাতারি,qatar,qatari|আল জাজিরা,আল-জাজিরা,al jazeera,doha|middleeast|
+kuwait:কুয়েত|কুয়েত,কুয়েতি,kuwait||middleeast|
+oman:ওমান|ওমান,মাসকট,oman,muscat||middleeast|
+bahrain:বাহরাইন|বাহরাইন,bahrain||middleeast|
+jordan:জর্ডান|জর্ডান,আম্মান,jordan,amman||middleeast palestine|
+egypt:মিসর|মিসর,মিশর,মিসরীয়,কায়রো,egypt,egyptian,cairo|সুয়েজ,suez|middleeast palestine|
+turkey:তুরস্ক|তুরস্ক,তুর্কি,তুর্কিয়ে,আঙ্কারা,ইস্তাম্বুল,turkey,turkish,türkiye,turkiye,ankara,istanbul|এরদোয়ান,এরদোগান,erdogan|middleeast syria europe|
+usa:যুক্তরাষ্ট্র|যুক্তরাষ্ট্র,মার্কিন,আমেরিকা,আমেরিকান,ইউএসএ,ইউএস,usa,united states,america,american|ওয়াশিংটন,হোয়াইট হাউস,পেন্টাগন,ক্যাপিটল,ট্রাম্প,ভ্যান্স,রুবিও,হেগসেথ,বাইডেন,কমলা হ্যারিস,ওবামা,ইলন মাস্ক,নিউইয়র্ক,নিউ ইয়র্ক,ক্যালিফোর্নিয়া,টেক্সাস,ফ্লোরিডা,শিকাগো,লস অ্যাঞ্জেলেস,মার্কিন কংগ্রেস,সিনেট,ডেমোক্র্যাট,ডেমোক্রেটিক,রিপাবলিকান,এফবিআই,সিআইএ,ফেডারেল রিজার্ভ,ফেড,স্টেট ডিপার্টমেন্ট,ভিসা নীতি,গ্রিন কার্ড,washington,white house,pentagon,trump,vance,rubio,biden,new york,california,texas,fbi,cia,republican,democrat|canada|
+trump:ট্রাম্প|ট্রাম্প,trump|হোয়াইট হাউস,ভ্যান্স,মাগা,white house,maga|usa|
+canada:কানাডা|কানাডা,কানাডীয়,canada,canadian|অটোয়া,টরন্টো,মন্ট্রিল,কার্নি,ট্রুডো,ottawa,toronto|usa|
+india:ভারত|ভারত,ভারতীয়,ইন্ডিয়া,দিল্লি,নয়াদিল্লি,নয়াদিল্লি,india,indian,delhi|মোদি,মোদী,বিজেপি,রাহুল গান্ধী,কংগ্রেস নেতা,অমিত শাহ,জয়শঙ্কর,কলকাতা,পশ্চিমবঙ্গ,মমতা,আসাম,ত্রিপুরা,মেঘালয়,মণিপুর,মুম্বাই,কাশ্মীর,বিএসএফ,সীমান্ত হত্যা,ভিসা সেন্টার,modi,bjp,kolkata,west bengal,mumbai,kashmir,bsf|pakistan|
+pakistan:পাকিস্তান|পাকিস্তান,পাকিস্তানি,ইসলামাবাদ,pakistan,pakistani,islamabad|শাহবাজ,নওয়াজ শরিফ,ইমরান খান,পিটিআই,আসিম মুনির,লাহোর,করাচি,বেলুচিস্তান,খাইবার,imran khan,lahore,karachi|india afghanistan|
+afghanistan:আফগানিস্তান|আফগানিস্তান,আফগান,কাবুল,afghanistan,afghan,kabul|তালেবান,তালেবান,taliban|pakistan|
+china:চীন|চীন,চীনা,চায়না,বেইজিং,china,chinese,beijing|সি চিন পিং,শি জিনপিং,শি জিন পিং,হংকং,সাংহাই,হুয়াওয়ে,xi jinping,hong kong,shanghai,huawei|taiwan|
+taiwan:তাইওয়ান|তাইওয়ান,তাইপে,taiwan,taipei||china|
+russia:রাশিয়া|রাশিয়া,রুশ,মস্কো,russia,russian,moscow|পুতিন,ক্রেমলিন,লাভরভ,putin,kremlin,lavrov|ukraine europe|
+ukraine:ইউক্রেন|ইউক্রেন,ইউক্রেনীয়,কিয়েভ,কিয়েভ,কিভ,ukraine,ukrainian,kyiv,kiev|জেলেনস্কি,জেলেনস্কি,দনবাস,দোনেৎস্ক,খারকিভ,ক্রিমিয়া,zelensky,zelenskyy,donbas,crimea|russia europe nato|
+europe:ইউরোপ|ইউরোপ,ইউরোপীয়,ইউরোপীয় ইউনিয়ন,ইইউ,eu,europe,european union,european|ব্রাসেলস,brussels|uk nato ukraine|uk france germany italy spain
+uk:যুক্তরাজ্য|যুক্তরাজ্য,ব্রিটেন,ব্রিটিশ,ইংল্যান্ড,লন্ডন,uk,britain,british,england,london|স্টারমার,ডাউনিং স্ট্রিট,টিউলিপ,স্কটল্যান্ড,ওয়েলস,বিবিসি,starmer,downing street,tulip|europe|
+france:ফ্রান্স|ফ্রান্স,ফরাসি,প্যারিস,france,french,paris|ম্যাক্রোঁ,মাখোঁ,macron|europe|
+germany:জার্মানি|জার্মানি,জার্মান,বার্লিন,germany,german,berlin|মের্জ,merz|europe|
+italy:ইতালি|ইতালি,ইতালীয়,italy,italian|মেলোনি,meloni|europe|
+spain:স্পেন|স্পেন,স্প্যানিশ,মাদ্রিদ,spain,madrid||europe|
+nato:ন্যাটো|ন্যাটো,nato|রুটে,rutte|europe ukraine russia usa|
+un:জাতিসংঘ|জাতিসংঘ,জাতিসংঘের,united nations,un|গুতেরেস,নিরাপত্তা পরিষদ,সাধারণ পরিষদ,ইউনিসেফ,ইউএনএইচসিআর,ইউনেসকো,বিশ্ব স্বাস্থ্য সংস্থা,শান্তিরক্ষী,guterres,unicef,unhcr,unesco|world|
+japan:জাপান|জাপান,জাপানি,টোকিও,japan,japanese,tokyo|জাইকা,jica||
+korea:কোরিয়া|কোরিয়া,দক্ষিণ কোরিয়া,উত্তর কোরিয়া,সিউল,পিয়ংইয়ং,korea,seoul,pyongyang|কিম জং উন,kim jong un||
+myanmar:মিয়ানমার|মিয়ানমার,মায়ানমার,বার্মা,myanmar,burma|রাখাইন,আরাকান আর্মি,আরাকান,জান্তা,নেপিদো,ইয়াঙ্গুন,সু চি,rakhine,arakan,junta|rohingya|
+rohingya:রোহিঙ্গা|রোহিঙ্গা,rohingya|উখিয়া,টেকনাফ,ভাসানচর,প্রত্যাবাসন,শরণার্থী শিবির,আশ্রয়শিবির,repatriation|myanmar|
+nepal:নেপাল|নেপাল,নেপালি,কাঠমান্ডু,nepal,kathmandu|||
+bhutan:ভুটান|ভুটান,থিম্পু,bhutan|||
+srilanka:শ্রীলঙ্কা|শ্রীলঙ্কা,শ্রীলংকা,কলম্বো,sri lanka|||
+maldives:মালদ্বীপ|মালদ্বীপ,maldives|||
+malaysia:মালয়েশিয়া|মালয়েশিয়া,মালয়েশীয়,কুয়ালালামপুর,malaysia,kuala lumpur|আনোয়ার ইব্রাহিম,anwar ibrahim|migrants|
+singapore:সিঙ্গাপুর|সিঙ্গাপুর,singapore||migrants|
+indonesia:ইন্দোনেশিয়া|ইন্দোনেশিয়া,জাকার্তা,indonesia,jakarta|||
+thailand:থাইল্যান্ড|থাইল্যান্ড,ব্যাংকক,thailand,bangkok|||
+australia:অস্ট্রেলিয়া|অস্ট্রেলিয়া,অস্ট্রেলীয়,সিডনি,মেলবোর্ন,australia,sydney,melbourne|||
+world:বিশ্ব|আন্তর্জাতিক,বিশ্ব!,বিদেশ,international,world,global|জাতিসংঘ,ন্যাটো,জি-২০,জি২০,জি-৭,ব্রিকস,বিশ্বব্যাংক,আইএমএফ,g20,brics|un|usa israel iran china russia ukraine india pakistan europe uk middleeast myanmar
+war:যুদ্ধ|যুদ্ধ,যুদ্ধবিরতি,সংঘাত,war,ceasefire,conflict|বিমান হামলা,ক্ষেপণাস্ত্র,মিসাইল,ড্রোন হামলা,গোলাবর্ষণ,বোমা হামলা,স্থল অভিযান,সেনা মোতায়েন,পারমাণবিক,missile,airstrike,drone strike,nuclear|israel palestine iran ukraine russia|
+migrants:প্রবাসী|প্রবাসী,প্রবাস,রেমিট্যান্স,প্রবাসী আয়,অভিবাসী,অভিবাসন,remittance,migrant,expatriate|শ্রমবাজার,শ্রমিক পাঠানো,বিদেশে কর্মী,জনশক্তি রপ্তানি,বিএমইটি,মানব পাচার,ভূমধ্যসাগর,অবৈধ অভিবাসী|saudi malaysia uae qatar italy|
+bnp:বিএনপি|বিএনপি,bnp|তারেক রহমান,খালেদা জিয়া,মির্জা ফখরুল,ফখরুল,রিজভী,আমীর খসরু,সালাহউদ্দিন,ছাত্রদল,যুবদল,স্বেচ্ছাসেবক দল,জিয়াউর রহমান,ধানের শীষ|election awami jamaat|
+awami:আওয়ামী লীগ|আওয়ামী লীগ,আওয়ামী,আ.লীগ,আ. লীগ,awami league|শেখ হাসিনা,হাসিনা,ছাত্রলীগ,যুবলীগ,ওবায়দুল কাদের,শেখ মুজিব,বঙ্গবন্ধু,সজীব ওয়াজেদ জয়|bnp election|
+jamaat:জামায়াত|জামায়াত,জামায়াতে ইসলামী,jamaat|শিবির,ইসলামী ছাত্রশিবির,শফিকুর রহমান,দাঁড়িপাল্লা,গোলাম পরওয়ার|bnp election|
+ncp:এনসিপি|এনসিপি,জাতীয় নাগরিক পার্টি,ncp|নাহিদ ইসলাম,হাসনাত আবদুল্লাহ,হাসনাত,সারজিস,আখতার হোসেন,নাসীরুদ্দীন পাটওয়ারী,শাপলা|election|
+election:নির্বাচন|নির্বাচন,ভোট,গণভোট,election,vote,referendum|নির্বাচন কমিশন,ইসি,সিইসি,প্রার্থী,মনোনয়ন,ভোটকেন্দ্র,ব্যালট,ভোটার,প্রতীক,ইশতেহার,তফসিল,পোলিং|bnp jamaat ncp awami|
+govt:সরকার|অন্তর্বর্তী সরকার,সরকার,উপদেষ্টা পরিষদ,government|ইউনূস,প্রধান উপদেষ্টা,উপদেষ্টা,সচিবালয়,মন্ত্রণালয়,প্রধানমন্ত্রী,মন্ত্রিসভা,yunus|election|
+yunus:ড. ইউনূস|ইউনূস,প্রধান উপদেষ্টা,yunus|অন্তর্বর্তী সরকার,প্রেস সচিব,শফিকুল আলম|govt|
+army:সেনাবাহিনী|সেনাবাহিনী,সেনাপ্রধান,সশস্ত্র বাহিনী,army|ওয়াকার-উজ-জামান,ওয়াকার,আইএসপিআর,সেনাসদস্য,ক্যান্টনমেন্ট,সেনানিবাস,বিজিবি,নৌবাহিনী,বিমানবাহিনী|police|
+police:পুলিশ|পুলিশ,র‍্যাব,র‌্যাব,র্যাব,police,rab|ডিএমপি,আইজিপি,থানা,ওসি,ডিবি,যৌথ বাহিনী,অভিযান|crime army|
+crime:অপরাধ|অপরাধ,খুন,হত্যা,crime,murder|লাশ,ছুরিকাঘাত,গুলি!,ধর্ষণ,ডাকাতি,ছিনতাই,চাঁদাবাজি,অপহরণ,গ্রেপ্তার,গ্রেফতার,মামলা,আসামি,রিমান্ড|police court|
+court:আদালত|আদালত,হাইকোর্ট,সুপ্রিম কোর্ট,ট্রাইব্যুনাল,court|রায়,জামিন,আপিল বিভাগ,প্রধান বিচারপতি,বিচারপতি,আইনজীবী,শুনানি,মৃত্যুদণ্ড,কারাদণ্ড|crime|
+economy:অর্থনীতি|অর্থনীতি,অর্থনৈতিক,economy|ডলার,টাকার মান,রিজার্ভ,বাংলাদেশ ব্যাংক,মূল্যস্ফীতি,জিডিপি,বাজেট,রাজস্ব,এনবিআর,আইএমএফ,বিশ্বব্যাংক,রপ্তানি,আমদানি,বিনিয়োগ,ঋণ,শেয়ারবাজার,পুঁজিবাজার,ব্যাংক খাত,inflation,imf,reserve|price migrants garments|
+price:দ্রব্যমূল্য|দ্রব্যমূল্য,দাম,বাজারদর,মূল্যবৃদ্ধি,price|চাল,পেঁয়াজ,আলু,ডিম,সবজি,সয়াবিন তেল,ভোজ্যতেল,চিনি,মাছ,মুরগি,গরুর মাংস,টিসিবি|economy|
+gold:সোনা|সোনা!,স্বর্ণ,সোনার দাম,gold|রুপা,বাজুস,ভরি|price|
+fuel:জ্বালানি|জ্বালানি,জ্বালানি তেল,তেলের দাম,জ্বালানির দাম,fuel,oil price|ডিজেল,পেট্রল,অকটেন,এলপিজি,গ্যাস সংকট,বিদ্যুৎ,লোডশেডিং,ওপেক,opec|economy middleeast|
+garments:পোশাকশিল্প|পোশাকশিল্প,পোশাক খাত,গার্মেন্টস,তৈরি পোশাক,garments,rmg|পোশাক শ্রমিক,বিজিএমইএ,কারখানা,শ্রমিক বিক্ষোভ,bgmea|economy|
+cricket:ক্রিকেট|ক্রিকেট,cricket|টাইগার,বিসিবি,বিপিএল,টেস্ট,ওয়ানডে,টি-টোয়েন্টি,টি টোয়েন্টি,আইপিএল,উইকেট,সেঞ্চুরি,মিরাজ,লিটন,মুশফিক,সাকিব,তামিম,তাসকিন,মোস্তাফিজ,bcb,bpl,ipl|sports|
+football:ফুটবল|ফুটবল,football,soccer|ফিফা,বিশ্বকাপ,মেসি,রোনালদো,নেইমার,এমবাপ্পে,আর্জেন্টিনা,ব্রাজিল,রিয়াল মাদ্রিদ,বার্সেলোনা,প্রিমিয়ার লিগ,হামজা,বাফুফে,fifa,messi,ronaldo|sports|
+sports:খেলাধুলা|খেলাধুলা,খেলা!,ক্রীড়া,sports,sport|ক্রিকেট,ফুটবল,হকি,অলিম্পিক,টুর্নামেন্ট,ম্যাচ,কোচ,খেলোয়াড়|cricket football|
+weather:আবহাওয়া|আবহাওয়া,weather|বৃষ্টি,বন্যা,ঝড়,ঘূর্ণিঝড়,সাইক্লোন,নিম্নচাপ,লঘুচাপ,তাপপ্রবাহ,শৈত্যপ্রবাহ,শীত,কুয়াশা,বজ্রপাত,জলোচ্ছ্বাস,তাপমাত্রা,cyclone,flood,rain|disaster|
+disaster:দুর্যোগ|দুর্যোগ,দুর্ঘটনা,disaster,accident|বন্যা,ভূমিকম্প,ভূমিধস,পাহাড়ধস,আগুন,অগ্নিকাণ্ড,সড়ক দুর্ঘটনা,নৌকাডুবি,লঞ্চডুবি,ট্রেন দুর্ঘটনা,বিস্ফোরণ,ভবন ধস,earthquake,fire|weather|
+health:স্বাস্থ্য|স্বাস্থ্য,চিকিৎসা,health|হাসপাতাল,ডাক্তার,চিকিৎসক,ডেঙ্গু,করোনা,ভাইরাস,টিকা,ওষুধ,ক্যানসার,রোগী,dengue|dengue|
+dengue:ডেঙ্গু|ডেঙ্গু,dengue|এডিস,মশা,চিকুনগুনিয়া|health|
+edu:শিক্ষা|শিক্ষা,education|স্কুল,কলেজ,বিশ্ববিদ্যালয়,ভর্তি,পরীক্ষা,এসএসসি,এইচএসসি,শিক্ষার্থী,শিক্ষক,ফলাফল,ঢাবি,বুয়েট,ডাকসু,ক্যাম্পাস|students|
+students:শিক্ষার্থী|শিক্ষার্থী,ছাত্র,students|ছাত্রদল,শিবির,বৈষম্যবিরোধী,ডাকসু,জাকসু,রাকসু,চাকসু,ক্যাম্পাস|edu|
+religion:ধর্ম|ধর্ম,ইসলাম,ধর্মীয়,religion,islam|মসজিদ,হজ,রমজান,ঈদ,নামাজ,মাদ্রাসা,আলেম,মুসলিম,ওয়াজ,কোরআন,হাদিস,পূজা,মন্দির,হিন্দু,বৌদ্ধ,খ্রিষ্টান,হেফাজত|saudi|
+tech:প্রযুক্তি|প্রযুক্তি,technology,tech|এআই,কৃত্রিম বুদ্ধিমত্তা,মোবাইল,স্মার্টফোন,ইন্টারনেট,গুগল,অ্যাপল,ফেসবুক,চ্যাটজিপিটি,ওপেনএআই,ইলন মাস্ক,স্টারলিংক,সাইবার,ai,chatgpt,openai,starlink|
+entertain:বিনোদন|বিনোদন,entertainment|সিনেমা,চলচ্চিত্র,নাটক,গান,অভিনেতা,অভিনেত্রী,নায়ক,নায়িকা,বলিউড,হলিউড,ঢালিউড,কনসার্ট,ওটিটি,শাকিব খান,শাহরুখ|
+dhaka:ঢাকা|ঢাকা,রাজধানী,dhaka|মিরপুর,উত্তরা!,গুলশান,বনানী,ধানমন্ডি,মোহাম্মদপুর,যাত্রাবাড়ী,পুরান ঢাকা,মতিঝিল,শাহবাগ,ফার্মগেট,বাড্ডা,রামপুরা,খিলগাঁও,সাভার,কেরানীগঞ্জ,ডিএনসিসি,ডিএসসিসি,মেট্রোরেল,গাজীপুর,নারায়ণগঞ্জ,নরসিংদী,মানিকগঞ্জ,মুন্সিগঞ্জ,টাঙ্গাইল,কিশোরগঞ্জ,ফরিদপুর,গোপালগঞ্জ,মাদারীপুর,রাজবাড়ী,শরীয়তপুর||
+ctg:চট্টগ্রাম|চট্টগ্রাম,চট্রগ্রাম,চাটগাঁ,বন্দরনগরী,chattogram,chittagong|কক্সবাজার,কুমিল্লা,ফেনী,নোয়াখালী,লক্ষ্মীপুর,চাঁদপুর,ব্রাহ্মণবাড়িয়া,রাঙামাটি,বান্দরবান,খাগড়াছড়ি,পার্বত্য চট্টগ্রাম,সীতাকুণ্ড,হাটহাজারী,মিরসরাই,চট্টগ্রাম বন্দর,টেকনাফ,সেন্ট মার্টিন||
+sylhet:সিলেট|সিলেট,sylhet|মৌলভীবাজার,হবিগঞ্জ,সুনামগঞ্জ,শ্রীমঙ্গল,কোম্পানীগঞ্জ,জাফলং||
+rajshahi:রাজশাহী|রাজশাহী,rajshahi|নওগাঁ,নাটোর,চাঁপাইনবাবগঞ্জ,পাবনা,সিরাজগঞ্জ,বগুড়া,জয়পুরহাট,রাবি||
+khulna:খুলনা|খুলনা,khulna|বাগেরহাট,সাতক্ষীরা,যশোর,ঝিনাইদহ,মাগুরা,নড়াইল,কুষ্টিয়া,চুয়াডাঙ্গা,মেহেরপুর,সুন্দরবন,মোংলা||
+barishal:বরিশাল|বরিশাল,barishal,barisal|বরগুনা,পটুয়াখালী,ভোলা,ঝালকাঠি,পিরোজপুর,কুয়াকাটা||
+rangpur:রংপুর|রংপুর,rangpur|দিনাজপুর,গাইবান্ধা,কুড়িগ্রাম,লালমনিরহাট,নীলফামারী,পঞ্চগড়,ঠাকুরগাঁও,তিস্তা||
+mymensingh:ময়মনসিংহ|ময়মনসিংহ,mymensingh|জামালপুর,নেত্রকোনা,শেরপুর||
+`;
+const BAD_SFX='(?:দের|ের|এর|কে|কেও|তে|তেও|েই|েও|ে|র|রা|ও|ই|া|ার|িয়|সহ|s)?';
+/* loose form: same text however it is spelled */
+function L(s){
+  return String(s==null?'':s).normalize('NFC').toLowerCase()
+    .replace(/[‌‍]/g,'')
+    .replace(/য়/g,'য়').replace(/ড়/g,'ড়').replace(/ঢ়/g,'ঢ়')
+    .replace(/ী/g,'ি').replace(/ূ/g,'ু').replace(/ঈ/g,'ই').replace(/ঊ/g,'উ')
+    .replace(/ণ/g,'ন').replace(/[শষ]/g,'স').replace(/ৎ/g,'ত').replace(/ঙ/g,'ং')
+    .replace(/[্ঁ]/g,'').replace(/য/g,'জ').replace(/[ড়ঢ়]/g,'র')
+    .replace(/[‘’“”"'`.,;:!?()\[\]{}|।॥–—\-_\/\\#*+=<>@&%৷]+/g,' ').replace(/\s+/g,' ').trim();
+}
+const cps=s=>[...s].length;
+const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const T={},ORDER=[],STRICT=new Set();
+DATA.trim().split('\n').forEach(line=>{
+  const [head,names,core,rel,mem]=line.split('|');if(!head)return;const [id,label]=head.split(':');
+  const list=s=>[...new Set(String(s||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>{if(x.endsWith('!')){x=x.slice(0,-1);STRICT.add(L(x));}return x;}))];
+  T[id]={id,label,names:list(names),core:list(core),rel:String(rel||'').split(/\s+/).filter(Boolean),mem:String(mem||'').split(/\s+/).filter(Boolean)};ORDER.push(id);
+});
+ORDER.forEach(id=>{const t=T[id];t.nL=[...new Set(t.names.map(L).filter(Boolean))];t.cL=[...new Set(t.core.map(L).filter(Boolean))];});
+/* one pattern for a list of words: word must START with the term (Bangla endings allowed); very short terms only take common endings */
+function rx(terms){
+  terms=[...new Set(terms.filter(Boolean))].sort((a,b)=>b.length-a.length);if(!terms.length)return null;
+  const sh=t=>cps(t)<=3||STRICT.has(t);const longT=terms.filter(t=>!sh(t)).map(escRe),shortT=terms.filter(sh).map(escRe);
+  const parts=[];if(longT.length)parts.push('(?:'+longT.join('|')+')');if(shortT.length)parts.push('(?:'+shortT.join('|')+')'+BAD_SFX+'(?![\\p{L}\\p{M}])');
+  try{return new RegExp('(?<![\\p{L}\\p{M}\\p{N}])(?:'+parts.join('|')+')','u');}catch(e){return null;}
+}
+/* does a query word mean this term? (typing in progress, endings, a 1-letter slip) */
+function dist(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let p=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const c=[i];let m=i;for(let j=1;j<=b.length;j++){const v=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));c[j]=v;if(v<m)m=v;}if(m>max)return max+1;p=c;}return p[b.length];}
+function wordMeans(w,term){
+  if(w===term)return 3;
+  const lw=cps(w),lt=cps(term);
+  if(lt>=3&&w.startsWith(term)&&lw-lt<=4)return 2;          // ইসরায়েলের → ইসরায়েল
+  if(lw>=3&&term.startsWith(w)&&!term.includes(' '))return 1; // ইসরা… (still typing)
+  if(lt>=5&&lw>=5&&dist(w,term,1)<=1)return 1;               // one-letter slip
+  return 0;
+}
+const cache=new Map();
+function analyze(q){
+  const qL=L(q);if(cache.has(qL))return cache.get(qL);
+  let words=qL.split(' ').filter(Boolean);const used=new Array(words.length).fill(false);const picks=[];
+  // 1) multi-word names/terms first (সৌদি আরব, দক্ষিণ কোরিয়া, তারেক রহমান…)
+  const phr=[];ORDER.forEach(id=>{const t=T[id];t.nL.forEach(n=>{if(n.includes(' '))phr.push([n,id,'n']);});t.cL.forEach(n=>{if(n.includes(' '))phr.push([n,id,'c']);});});
+  phr.sort((a,b)=>b[0].length-a[0].length);
+  phr.forEach(([n,id,k])=>{const nw=n.split(' ');for(let i=0;i+nw.length<=words.length;i++){if(used.slice(i,i+nw.length).some(Boolean))continue;
+    if(nw.every((x,j)=>j<nw.length-1?words[i+j]===x:wordMeans(words[i+j],x)>=2)){for(let j=0;j<nw.length;j++)used[i+j]=true;picks.push({id,kind:k,term:n,q:words.slice(i,i+nw.length).join(' ')});}}});
+  // 2) single words
+  words.forEach((w,i)=>{if(used[i]||cps(w)<2)return;let best=null;
+    ORDER.forEach(id=>{const t=T[id];
+      t.nL.forEach(n=>{if(n.includes(' '))return;const m=wordMeans(w,n);if(m&&(!best||m*2>best.s))best={id,kind:'n',term:n,s:m*2};});
+      t.cL.forEach(n=>{if(n.includes(' '))return;const m=wordMeans(w,n);if(m&&(!best||m*2-1>best.s))best={id,kind:'c',term:n,s:m*2-1};});});
+    if(best&&best.s>=2){used[i]=true;picks.push({id:best.id,kind:best.kind,term:best.term,q:w});}});
+  const rest=words.filter((w,i)=>!used[i]);
+  // build the groups (one per thing asked for)
+  const groups=[],labels=[],relSeen=new Set();
+  const seen=new Set();
+  picks.forEach(p=>{const key=p.id+'|'+p.kind+'|'+(p.kind==='c'?p.term:'');if(seen.has(key))return;seen.add(key);const t=T[p.id];
+    let d,c,r=[];const relIds=[];
+    if(p.kind==='n'){
+      d=t.nL;c=t.cL.slice();t.mem.forEach(m=>{const mt=T[m];if(mt){c=c.concat(mt.nL,mt.cL);}});
+      t.rel.forEach(rid=>{const rt=T[rid];if(!rt)return;relIds.push(rid);r=r.concat(rt.nL);if(!rt.mem.length)r=r.concat(rt.cL.filter(x=>cps(x)>=4));});
+    }else{ // a person / place inside a topic: that word first, then the topic
+      d=[p.term];c=t.nL;relIds.push(t.id);t.rel.slice(0,3).forEach(rid=>{const rt=T[rid];if(rt){r=r.concat(rt.nL);relIds.push(rid);}});
+      if(!labels.includes(t.label))labels.push(t.label);
+    }
+    const dS=new Set(d);c=c.filter(x=>!dS.has(x));const cS=new Set(c);r=r.filter(x=>!dS.has(x)&&!cS.has(x));
+    groups.push({id:p.id,label:p.kind==='n'?t.label:p.q,r3:rx(d),r2:rx(c),r1:rx(r),terms:d.concat(c,r)});
+    relIds.forEach(id=>{if(id!==p.id&&T[id])relSeen.add(id);});
+  });
+  const asked=new Set(picks.filter(p=>p.kind==='n').map(p=>p.id));
+  const related=[...relSeen].filter(id=>!asked.has(id)).map(id=>({id,label:T[id].label}));
+  const all=groups.flatMap(g=>g.terms);
+  const res={q:qL,groups,rest,related,topics:groups.map(g=>g.label),hl:rx(all.concat(rest.filter(w=>cps(w)>=2)))};
+  if(cache.size>200)cache.clear();cache.set(qL,res);return res;
+}
+/* score one story: title & body are plain text. Returns {s: score, tier: 3/2/1/0} */
+function score(A,title,body,prepped){
+  const tL=prepped&&prepped.t!=null?prepped.t:L(title),bL=prepped&&prepped.b!=null?prepped.b:L(body);let s=0,tier=0;
+  A.groups.forEach(g=>{let gs=0,gt=0;
+    if(g.r3){if(g.r3.test(tL)){gs=12;gt=3;}else if(g.r3.test(bL)){gs=8;gt=3;}}
+    if(g.r2&&gs<12){if(g.r2.test(tL)){gs=Math.max(gs,7);gt=Math.max(gt,2);}else if(g.r2.test(bL)){gs=Math.max(gs,gt===3?gs:4);gt=Math.max(gt,2);}}
+    if(g.r1&&!gt){if(g.r1.test(tL)){gs=3.5;gt=1;}else if(g.r1.test(bL)){gs=2;gt=1;}}
+    s+=gs;if(gt>tier)tier=gt;});
+  return{s,tier};
+}
+/* Google News search text: the topic + its strongest links joined with OR */
+function googleQuery(A,raw){
+  if(!A.groups.length)return raw;
+  const bn=a=>a.filter(x=>/[ঀ-৿]/.test(x));const parts=[];
+  A.groups.forEach(g=>{const t=T[g.id];if(!t)return;parts.push(...bn(t.names).slice(0,t.mem.length?1:2));(t.mem.length?t.mem.slice(0,6):t.rel.slice(0,3)).forEach(r=>{if(T[r])parts.push(bn(T[r].names)[0]);});});
+  const uniq=[...new Set(parts.filter(Boolean))].slice(0,7);
+  const extra=A.rest.join(' ');
+  return(uniq.length>1?'('+uniq.join(' OR ')+')':uniq[0]||'')+(extra?' '+extra:'');
+}
+window.TFTopic={L,analyze,score,googleQuery,topics:T};
+})();
+</script>
 <script id="tf9">/* ===================================================================
    TF News Studio — v5 design layer (behaviour)
    Toasts · command palette · shortcuts · autosave status · helper text as info bubbles · tidy labels
@@ -5820,6 +6017,17 @@ function parseQ(raw){return raw.split(/[,،|]+/).map(g=>g.trim()).filter(Boolean
 const hit=(txt,groups)=>groups.some(g=>g.every(set=>set.some(t=>txt.includes(t))));
 function prep(x){if(x._t!==undefined)return x;x._t=nz(x.title);x._d=nz(x.desc);const all=x._t+' '+x._d;x._c=new Set(CATS.filter(c=>c.words.some(w=>all.includes(w))).map(c=>c.id));return x;}
 
+/* smart topic search (TFTopic): ইসরায়েল → ইসরায়েল + নেতানিয়াহু/গাজা + ইরান/লেবানন …, words anywhere in the story */
+const TT=()=>window.TFTopic||null;
+function smartQ(q){if(!q)return null;const A=TT()?TT().analyze(q):null;const useT=!!(A&&A.groups.length);
+  const toks=q.split(/[\s,،|]+/).filter(Boolean);const rest=useT?toks.filter(t=>A.rest.includes(TT().L(t))):toks;
+  return{A:useT?A:null,groups:rest.length?parseQ(rest.join(' ')):null,q};}
+function rate(x,S){prep(x);let tier=0,s=0,r=0;
+  if(S.A){if(!x._tl){let path='';try{path=decodeURIComponent(new URL(x.link).pathname).replace(/[\/_\-.]+/g,' ');}catch(e){}x._tl={t:TT().L(x.title),b:TT().L((x.desc||'')+' '+path)};}
+    const o=TT().score(S.A,'','',x._tl);tier=o.tier;s=o.s;}
+  if(S.groups){const all=x._t+' '+x._d;if(hit(all,S.groups))r=hit(x._t,S.groups)?2:1;}
+  const top=[0,3.5,7,12][tier]||0;
+  return{ok:s>0||r>0,key:tier*2+(tier&&s>=top?1:0)+(S.A?r*.25:r),s:s+r*3};}
 let allowed=0;
 function nwOK(){return typeof NW!=='undefined'&&typeof nwRender==='function'&&typeof nwFiltered==='function'&&$('#nwQ')&&$('#nwList');}
 
@@ -5828,11 +6036,10 @@ function install(){
   if(allowed||!nwOK())return false;allowed=1;
   if(!NW.cat)NW.cat='all';
   window.nwFiltered=function(){
-    const q=(($('#nwQ')||{}).value||'').trim();const groups=q?parseQ(q):null;
+    const q=(($('#nwQ')||{}).value||'').trim();const S=smartQ(q);
     let L=NW.items.filter(x=>NW.src==='all'||x.src===NW.src);
-    if(groups||NW.cat!=='all')L.forEach(prep);
-    if(groups){L=L.filter(x=>hit(x._t+' '+x._d,groups));
-      L=L.map(x=>({x,t:hit(x._t,groups)?1:0})).sort((a,b)=>b.t-a.t||((b.x.date||0)-(a.x.date||0))).map(o=>o.x);}
+    if(S||NW.cat!=='all')L.forEach(prep);
+    if(S){L=L.map(x=>({x,r:rate(x,S)})).filter(o=>o.r.ok).sort((a,b)=>b.r.key-a.r.key||b.r.s-a.r.s||((b.x.date||0)-(a.x.date||0))).map(o=>o.x);}
     if(NW.cat!=='all')L=L.filter(x=>x._c.has(NW.cat));
     return L;};
   const _r=window.nwRender;window.nwRender=function(){const r=_r.apply(this,arguments);try{after();}catch(e){}return r;};
@@ -5843,7 +6050,7 @@ function install(){
 /* ---------- UI ---------- */
 function buildUI(){
   const q=$('#nwQ');if(!q||$('.tf10bar'))return;
-  q.placeholder='কিওয়ার্ড লিখুন — যেমন: খেলাধুলা, খুন, আন্তর্জাতিক';q.setAttribute('autocomplete','off');q.setAttribute('aria-label','খবর খুঁজুন');
+  q.placeholder='খুঁজুন — যেমন: ইসরায়েল, যুক্তরাষ্ট্র, মধ্যপ্রাচ্য, খেলা';q.setAttribute('autocomplete','off');q.setAttribute('aria-label','খবর খুঁজুন');
   const bar=D.createElement('div');bar.className='tf10bar';
   const wrap=D.createElement('div');wrap.className='tf10q';
   wrap.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
@@ -5857,7 +6064,7 @@ function buildUI(){
   x.onclick=()=>{q.value='';upd();q.dispatchEvent(new Event('input',{bubbles:true}));q.focus();};
   sel.onchange=()=>{NW.src=sel.value;try{nwSave();}catch(e){}NW.shown=40;nwChips();nwRender();};
   cats.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;NW.cat=b.dataset.c;NW.shown=40;nwRender();});
-  res.addEventListener('click',e=>{if(!e.target.closest('button'))return;q.value='';upd();NW.cat='all';if(NW.src!=='all'){NW.src='all';try{nwSave();}catch(er){}nwChips();}NW.shown=40;nwRender();});
+  res.addEventListener('click',e=>{const rq=e.target.closest('[data-rq]');if(rq){e.preventDefault();q.value=rq.dataset.rq;upd();q.dispatchEvent(new Event('input',{bubbles:true}));return;}if(!e.target.closest('button'))return;q.value='';upd();NW.cat='all';if(NW.src!=='all'){NW.src='all';try{nwSave();}catch(er){}nwChips();}NW.shown=40;nwRender();});
   q.addEventListener('keydown',e=>{if(e.key==='Escape'&&q.value){e.stopImmediatePropagation();e.preventDefault();x.click();}},true);
 }
 function syncSrc(){
@@ -5868,9 +6075,9 @@ function syncSrc(){
   sel.value=NW.src&&(NW.src==='all'||cnt[NW.src])?NW.src:'all';
 }
 function after(){
-  const q=(($('#nwQ')||{}).value||'').trim();const groups=q?parseQ(q):null;
+  const q=(($('#nwQ')||{}).value||'').trim();const S=smartQ(q);const groups=S&&S.groups;
   // chips with counts (respect source + keyword, ignore the chosen topic)
-  const base=NW.items.filter(x=>(NW.src==='all'||x.src===NW.src)&&(!groups||hit((prep(x),x._t+' '+x._d),groups)));
+  const base=NW.items.filter(x=>(NW.src==='all'||x.src===NW.src)&&(!S||rate(x,S).ok));
   base.forEach(prep);
   const cats=$('#tf10Cats');
   if(cats){
@@ -5885,7 +6092,8 @@ function after(){
   const res=$('#tf10Res');
   if(res){const L=(typeof nwFiltered==='function'?nwFiltered():NW.view)||[];const filtered=!!q||NW.cat!=='all'||NW.src!=='all';
     if(filtered&&NW.items.length&&L.length){const label=q?`‘${escH(q)}’`:(NW.cat!=='all'?escH((CATS.find(c=>c.id===NW.cat)||{}).name||''):'');
-      res.innerHTML=`<span>${label?label+' — ':''}<b>${bn(L.length)}টি</b> খবর পাওয়া গেছে</span><button type="button">সব দেখুন</button>`;}
+      const rel=S&&S.A&&S.A.related.length?`<div class="tf13rel"><span>সাথে খোঁজা হচ্ছে:</span>${S.A.related.slice(0,8).map(r=>`<a href="#" data-rq="${escH(r.label)}">${escH(r.label)}</a>`).join('')}</div>`:'';
+      res.innerHTML=`<span>${label?label+' — ':''}<b>${bn(L.length)}টি</b> খবর পাওয়া গেছে</span><button type="button">সব দেখুন</button>${rel}`;}
     else res.innerHTML='';}
   // highlight + empty state
   const list=$('#nwList');
@@ -5895,6 +6103,10 @@ function after(){
     list.innerHTML=`<div class="tf10empty"><b>কোনো খবর পাওয়া যায়নি</b>অন্য শব্দ দিয়ে খুঁজুন, বা নিচের একটা বেছে নিন<div class="sg">${sg.map(s=>`<button type="button">${s}</button>`).join('')}</div></div>`;
     $$('.sg button',list).forEach(b=>b.onclick=()=>{const qq=$('#nwQ');qq.value=b.textContent;qq.dispatchEvent(new Event('input',{bubbles:true}));});
   }
+  if(S&&S.A&&S.A.hl){const re=S.A.hl;
+    $$('.nwi .t b',list).forEach(b=>{const w=D.createTreeWalker(b,NodeFilter.SHOW_TEXT);const ns=[];while(w.nextNode())ns.push(w.currentNode);
+      ns.forEach(n=>{if(n.parentNode&&n.parentNode.classList&&n.parentNode.classList.contains('tf10m'))return;const parts=n.nodeValue.split(/(\s+)/);if(!parts.some(p=>p.trim()&&re.test(TT().L(p))))return;
+        const f=D.createDocumentFragment();parts.forEach(p=>{if(p.trim()&&re.test(TT().L(p))){const mk=D.createElement('mark');mk.className='tf10m';mk.textContent=p;f.appendChild(mk);}else f.appendChild(D.createTextNode(p));});n.replaceWith(f);});});}
   if(groups){const terms=[...new Set(groups.flat(2))].filter(t=>t.length>1).sort((a,b)=>b.length-a.length);
     if(terms.length){const re=new RegExp('([\\p{L}\\p{M}]*(?:'+terms.map(escRe).join('|')+')[\\p{L}\\p{M}]*)','giu');
       $$('.nwi .t b',list).forEach(b=>{const w=D.createTreeWalker(b,NodeFilter.SHOW_TEXT);const ns=[];while(w.nextNode())ns.push(w.currentNode);
@@ -6412,5 +6624,96 @@ tidy();setTimeout(tidy,600);setTimeout(tidy,2000);
 let mt=0;new MutationObserver(()=>{clearTimeout(mt);mt=setTimeout(tidy,200);}).observe(D.body,{childList:true,subtree:true,characterData:true});
 })();
 </script><!--/tf12-->
+<!--tf13--><style id="tf13css">/* ===== TF News Studio — v13: smart topic search, tap-to-pick news, video size (ratio) picker ===== */
+#tf10Res{flex-wrap:wrap}
+.tf13rel{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:2px}
+.tf13rel span{font-size:12.5px;color:var(--t3,var(--t2))}
+.tf13rel a{display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:13px;background:rgba(var(--acrgb,255,138,112),.14);color:var(--act,var(--ac));font-size:12.5px;font-weight:600;text-decoration:none}
+.tf13rel a:hover{background:rgba(var(--acrgb,255,138,112),.24)}
+html body #nwModal .nwi.sel{border-color:var(--ac);background:rgba(var(--acrgb,255,138,112),.09)}
+html body #nwModal .nwi .bk{font-weight:800;font-size:15px}
+html body #nwModal .nwi .eye{width:36px;height:36px;border-radius:50%;border:1px solid var(--bd2,#ddd);background:transparent;color:var(--t2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0;transition:all .15s}
+html body #nwModal .nwi .eye:hover{color:var(--tx);background:var(--s2)}
+.tf13pick{display:inline-flex;align-items:center;gap:6px;margin:0 2px 10px;border:1px solid var(--bd2,#ddd);background:transparent;color:var(--tx);height:32px;padding:0 13px;border-radius:16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.tf13pick:hover{background:var(--s2)}
+#nwModal .basket .tf13r{display:flex;gap:4px;margin-right:4px}
+#nwModal .basket .tf13r button{height:34px!important;padding:0 10px!important;border-radius:10px!important;display:inline-flex;align-items:center;gap:6px;background:transparent!important;border:1px solid var(--bd2,rgba(255,255,255,.25))!important;color:var(--t2,#fff)!important;font-size:12.5px!important;font-weight:600}
+#nwModal .basket .tf13r button.on{border-color:var(--ac)!important;color:var(--tx,#fff)!important;background:rgba(var(--acrgb,255,138,112),.16)!important}
+.tf13sh{display:inline-block;border:2px solid currentColor;border-radius:3px;flex:none}
+#tf13Top{width:auto!important;padding:0 12px!important;gap:7px}
+#tf13Ov{position:fixed;inset:0;z-index:2147483000;background:rgba(6,8,14,.62);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}
+#tf13Ov.hidden{display:none}
+#tf13Ov .bx{width:min(760px,100%);max-height:94vh;overflow:auto;background:var(--surf,#fff);color:var(--tx,#111);border:1px solid var(--bd2,#ddd);border-radius:22px;padding:26px 26px 22px;box-shadow:0 40px 120px rgba(0,0,0,.55);animation:tf13in .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes tf13in{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+#tf13Ov h3{margin:0 0 4px;font-size:21px}
+#tf13Ov p{margin:0 0 18px;color:var(--t2,#666);font-size:14px}
+#tf13Ov .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+#tf13Ov .g button{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;min-height:150px;padding:16px 10px 14px;border-radius:16px;border:1.5px solid var(--bd2,#ddd);background:var(--s2,#f5f5f5);color:var(--tx,#111);font:inherit;cursor:pointer;transition:transform .18s,border-color .18s,background .18s}
+#tf13Ov .g button:hover{transform:translateY(-2px);border-color:var(--ac)}
+#tf13Ov .g button.on{border-color:var(--ac);background:rgba(var(--acrgb,255,138,112),.13)}
+#tf13Ov .g .shp{border:2.5px solid currentColor;border-radius:6px;opacity:.85;margin:auto 0 4px}
+#tf13Ov .g button.on .shp{color:var(--ac)}
+#tf13Ov .g b{font-size:17px}
+#tf13Ov .g small{font-size:12px;color:var(--t2,#666);text-align:center;line-height:1.35}
+#tf13Ov .ft{display:flex;justify-content:flex-end;margin-top:18px}
+#tf13Ov .ft button{height:40px;padding:0 20px;border-radius:12px;border:1px solid var(--bd2,#ddd);background:transparent;color:var(--tx);font:inherit;font-weight:600;cursor:pointer}
+@media (max-width:560px){#tf13Ov .g{grid-template-columns:repeat(2,1fr)}#tf13Ov .bx{padding:20px 16px}#nwModal .basket .tf13r{display:none}}
+</style>
+<script id="tf13">/* ===== TF News Studio — v13 =====
+   1) video size (screen ratio): pick it when you start (first open / "নতুন"), change it any time from the top bar,
+      the preview bar or right in the news window before making the video
+   2) news window: tap a story to pick it (numbered in order), 👁 for details, "সেরা ৫টি" picks the top 5 shown */
+(function(){'use strict';
+if(typeof LIVE!=='undefined'&&LIVE)return;
+if(document.getElementById('s-home'))return;
+const D=document,$=s=>D.querySelector(s);
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const LIST=[['16:9','ভিডিও','YouTube · Facebook ভিডিও'],['9:16','রিলস','Reels · Shorts · TikTok'],['1:1','স্কয়ার','ফেসবুক/ইনস্টা পোস্ট'],['4:5','ফিড','FB · Insta ফিড'],['4:6','লম্বা পোস্ট','২:৩ মাপ'],['3:4','পোর্ট্রেট','লম্বা পোস্ট'],['4:3','পুরনো টিভি','৪:৩ মাপ']];
+const cur=()=>{const a=$('#aspect');return (a&&a.value)||(typeof settings!=='undefined'&&settings.aspect)||'16:9';};
+const dims=(r,m)=>{const [a,b]=r.split(':').map(Number);return a>=b?[m,Math.round(m*b/a)]:[Math.round(m*a/b),m];};
+const shape=(r,m,cls)=>{const [w,h]=dims(r,m);return `<span class="${cls}" style="width:${w}px;height:${h}px"></span>`;};
+function setR(r){const a=$('#aspect');if(!a)return;if(![...a.options].some(o=>o.value===r)){const o=D.createElement('option');o.value=r;o.textContent=r;a.appendChild(o);}if(a.value!==r){a.value=r;a.dispatchEvent(new Event('change',{bubbles:true}));}paint();}
+/* the picker */
+const ov=D.createElement('div');ov.id='tf13Ov';ov.className='hidden';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','ভিডিওর মাপ');D.body.appendChild(ov);
+function openPicker(first){
+  ov.innerHTML=`<div class="bx"><h3>${first?'কোন মাপে ভিডিও বানাবেন?':'ভিডিওর মাপ (স্ক্রিন রেশিও)'}</h3><p>${first?'বেছে নিয়ে কাজ শুরু করুন — পরে যেকোনো সময় ওপরের মাপ বাটন থেকে বদলাতে পারবেন।':'যেকোনো সময় বদলানো যায় — দৃশ্যগুলো নতুন মাপে নিজে সেজে যাবে।'}</p><div class="g"></div><div class="ft"><button type="button" class="x">${first?'পরে ঠিক করব':'বন্ধ করুন'}</button></div></div>`;
+  const g=ov.querySelector('.g');
+  LIST.forEach(([r,n,u])=>{const b=D.createElement('button');b.type='button';b.className=r===cur()?'on':'';b.innerHTML=shape(r,64,'shp')+`<b>${bn(r)}</b><small>${n}<br>${u}</small>`;b.onclick=()=>{setR(r);close();if(typeof toast==='function')toast('ভিডিওর মাপ: '+bn(r)+' — '+n,'ok');};g.appendChild(b);});
+  ov.querySelector('.x').onclick=close;ov.classList.remove('hidden');setTimeout(()=>{const on=g.querySelector('.on')||g.querySelector('button');on&&on.focus();},60);
+}
+function close(){ov.classList.add('hidden');}
+ov.addEventListener('click',e=>{if(e.target===ov)close();});
+D.addEventListener('keydown',e=>{if(e.key==='Escape'&&!ov.classList.contains('hidden')){e.stopImmediatePropagation();close();}},true);
+window.tf13Ratio=openPicker;
+/* top bar button: always shows the current size */
+function topBtn(){const top=$('#tfTopBtns');if(!top||$('#tf13Top'))return;const b=D.createElement('button');b.id='tf13Top';b.type='button';b.className='tbtn';b.dataset.tip='ভিডিওর মাপ';b.setAttribute('aria-label','ভিডিওর মাপ বদলান');b.onclick=()=>openPicker(false);
+  const pri=top.querySelector('.tbtn.pri'),gear=$('#tf11Gear');top.insertBefore(b,gear||pri||null);paint();}
+/* news window: size chips beside "ভিডিও বানান" + "সেরা ৫টি" */
+function newsBits(){
+  const bk=$('#nwBasket');if(bk&&!bk.querySelector('.tf13r')){const w=D.createElement('div');w.className='tf13r';
+    ['16:9','9:16','1:1'].forEach(r=>{const b=D.createElement('button');b.type='button';b.dataset.r=r;b.title='ভিডিওর মাপ '+r;b.innerHTML=shape(r,14,'tf13sh')+bn(r);b.onclick=()=>setR(r);w.appendChild(b);});
+    const use=$('#nwBUse');bk.insertBefore(w,use);paint();}
+  const res=$('#tf10Res'),list=$('#nwList');
+  if(list&&!$('#tf13Top5')){const b=D.createElement('button');b.id='tf13Top5';b.type='button';b.className='tf13pick';b.textContent='＋ ওপরের সেরা ৫টি বাছুন';
+    b.onclick=()=>{if(typeof NW==='undefined'||!NW.view)return;let n=0;for(const it of NW.view){if(n>=5||NW.basket.length>=30)break;if(!nwInBasket(it.link)){nwToggleBasket(it);n++;}}if(!n&&typeof toast==='function')toast('ওপরের খবরগুলো আগেই বাছাই করা আছে','info');};
+    list.parentNode.insertBefore(b,list);}
+}
+function paint(){const r=cur();const t=$('#tf13Top');if(t&&t.dataset.r!==r){t.dataset.r=r;t.innerHTML=shape(r,15,'tf13sh')+'<span>'+bn(r)+'</span>';}
+  D.querySelectorAll('#nwModal .basket .tf13r button').forEach(b=>{const on=b.dataset.r===r;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);});}
+D.addEventListener('change',e=>{if(e.target&&e.target.id==='aspect')paint();});
+/* ask for the size when a new project starts */
+if(typeof freshStart==='function'){const _f=freshStart;freshStart=async function(){const r=await _f.apply(this,arguments);try{const s=$('#script');if(s&&!s.value.trim()&&(typeof scenes==='undefined'||!scenes.length))setTimeout(()=>openPicker(true),250);}catch(e){}return r;};
+  D.querySelectorAll('.freshStart').forEach(b=>b.onclick=()=>freshStart());}
+// when the app opens → ask once per visit (after the channel window, if that is showing)
+{let tries=0;const ask=()=>{try{if(sessionStorage.getItem('tf13asked'))return;}catch(e){}
+  const busy=[...D.querySelectorAll('#tfChOv,.tf11ov,#nwModal')].some(x=>!x.classList.contains('hidden')&&getComputedStyle(x).display!=='none'&&getComputedStyle(x).visibility!=='hidden'&&x.getBoundingClientRect().width>0);
+  if(busy&&tries++<600){setTimeout(ask,700);return;}try{sessionStorage.setItem('tf13asked','1');}catch(e){}openPicker(true);};setTimeout(ask,1400);}
+(window.tf9Extra=window.tf9Extra||[]).push({g:'কাজ',n:'ভিডিওর মাপ বদলান (রেশিও)',ic:'ratio',k:'ratio aspect size 16:9 9:16 reels shorts মাপ',run:()=>openPicker(false)});
+function tick(){topBtn();newsBits();paint();}
+tick();setTimeout(tick,700);setTimeout(tick,2200);
+let mt=0;new MutationObserver(()=>{clearTimeout(mt);mt=setTimeout(tick,250);}).observe(D.body,{childList:true,subtree:true});
+})();
+</script><!--/tf13-->
+
 </body>
 </html>
