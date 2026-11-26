@@ -1677,7 +1677,9 @@ function build(keepTiming){
 const IDB={db:null,open(){return new Promise((res,rej)=>{if(this.db)return res(this.db);try{const r=indexedDB.open('tfx_assets',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{this.db=r.result;res(this.db);};r.onerror=()=>rej(r.error);}catch(e){rej(e);}});},
   async get(k){try{const db=await this.open();return await new Promise(res=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null);});}catch(e){return null;}},
   async set(k,v){try{const db=await this.open();return await new Promise(res=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);});}catch(e){return false;}}};
-function blobImg(b){return new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=URL.createObjectURL(b);});}
+function blobImg(b){return new Promise(res=>{if(!b)return res(null);const im=new Image();let done=false;const end=v=>{if(done)return;done=true;clearTimeout(to);res(v);};const to=setTimeout(()=>end(null),20000);im.onload=()=>end(im.naturalWidth?im:null);
+  im.onerror=()=>{try{const r=new FileReader();r.onload=()=>{const i2=new Image();i2.onload=()=>end(i2.naturalWidth?i2:null);i2.onerror=()=>end(null);i2.src=r.result;};r.onerror=()=>end(null);r.readAsDataURL(b);}catch(e){end(null);}};
+  try{im.src=URL.createObjectURL(b);}catch(e){im.onerror();}});}
 function blobVid(b){return new Promise(res=>{const v=document.createElement('video');v.muted=true;v.loop=true;v.playsInline=true;v.preload='auto';let done=false;v.onloadeddata=()=>{if(!done){done=true;res(v);}};v.onerror=()=>{if(!done){done=true;res(null);}};setTimeout(()=>{if(!done){done=true;res(v.readyState>=1?v:null);}},8000);v.src=URL.createObjectURL(b);});}
 const isVidBlob=b=>/^video\//.test(b.type||'')||/\.(mp4|webm|mov|m4v)$/i.test(b.name||'');
 function saveGallery(){return IDB.set('gallery',GALLERY.map(g=>({name:g.name,blob:g.blob,kind:g.kind,query:g.query||'',credit:g.credit||''})));}
@@ -4871,14 +4873,24 @@ async function cleanLogo(blob){
 window.tfCleanLogo=cleanLogo;
 const toDataURL=b=>new Promise(res=>{if(!b)return res('');const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>res('');r.readAsDataURL(b);});
 function fromDataURL(u){try{const[h,b64]=u.split(',');const mt=(h.match(/data:([^;]+)/)||[])[1]||'image/png';const bin=atob(b64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:mt});}catch(e){return null;}}
-async function shrink(blob,max=512){const im=await blobImg(blob);if(!im||!im.naturalWidth)return blob;const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));if(s>=1&&blob.size<400000)return blob;
-  const c=D.createElement('canvas');c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(b=>r(b||blob),'image/png'));}
+async function shrink(blob,max=512){const im=await blobImg(blob);if(!im||!im.naturalWidth)return blob;
+  for(const m of [max,384,256]){const s=Math.min(1,m/Math.max(im.naturalWidth,im.naturalHeight));if(s>=1&&blob.size<180000&&/png|jpe?g|webp/.test(blob.type||''))return blob;
+    const c=D.createElement('canvas');c.width=Math.max(1,Math.round(im.naturalWidth*s));c.height=Math.max(1,Math.round(im.naturalHeight*s));c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    let b=await new Promise(r=>c.toBlob(r,'image/png'));if(b&&b.size>180000){const w=await new Promise(r=>c.toBlob(r,'image/webp',.9));if(w&&/webp/.test(w.type)&&w.size<b.size)b=w;}
+    if(b&&(b.size<=180000||m===256))return b;}
+  return blob;}
+/* read + clean + shrink a picked logo; null when the phone cannot open the picture */
+async function prepLogo(f,clean){const im=await blobImg(f);if(!im)return null;let out=f;try{out=clean?await cleanLogo(f):f;}catch(e){out=f;}try{out=await shrink(out);}catch(e){}
+  const u=await toDataURL(out);return u&&/^data:image\//.test(u)?u:null;}
+const LOGO_BAD='এই ছবিটা ফোন খুলতে পারছে না। PNG বা JPG ছবি দিন — HEIC ছবি হলে স্ক্রিনশট নিয়ে সেটা দিন।';
 
 /* =============== 4. channel profiles =============== */
 let CH=LS.get('tfx_channels',[]);if(!Array.isArray(CH))CH=[];let ACT=LS.get('tfx_ch_active','');
 const uid=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const cur=()=>CH.find(c=>c.id===ACT)||CH[0]||null;
-function persist(){if(!LS.set('tfx_channels',CH)){alert('ব্রাউজারে জায়গা কম — লোগো সেভ হয়নি। ছোট লোগো দিন বা পুরনো চ্যানেল মুছুন।');}LS.set('tfx_ch_active',ACT);}
+function persist(){LS.set('tfx_ch_active',ACT);if(LS.set('tfx_channels',CH))return;
+  (async()=>{for(const c of CH){if(c.logo&&c.logo.length>60000){const b=fromDataURL(c.logo);if(b){try{const s=await shrink(b,200);const u=await toDataURL(s);if(u&&u.length<c.logo.length)c.logo=u;}catch(e){}}}}
+    if(!LS.set('tfx_channels',CH))alert('ব্রাউজারে জায়গা কম — লোগো সেভ হয়নি। পুরনো চ্যানেল মুছুন।');})();}
 const initial=n=>{const t=String(n||'').trim();return t?t[0]:'?';};
 function logoEl(c,cls){if(c&&c.logo){const i=el('img',cls);i.src=c.logo;i.alt='';return i;}const s=el('span',cls+' ini');s.textContent=initial(c&&c.name);return s;}
 // top-bar chip
@@ -4907,9 +4919,10 @@ setLogo=async function(blob){
   if(applying)return setLogoRaw(blob);
   const c=cur();if(!c)return setLogoRaw(blob);
   if(!blob){c.logo='';persist();await setLogoRaw(null);renderChip();return;}
-  const keep=c.clean!==false;let out=blob;try{out=await shrink(keep?await cleanLogo(blob):blob);}catch(e){}
+  const keep=c.clean!==false,u=await prepLogo(blob,keep).catch(()=>null);
+  if(!u){alert(LOGO_BAD);return;}
   try{await IDB.set('chorig_'+c.id,blob);}catch(e){}
-  c.logo=await toDataURL(out);persist();const b=fromDataURL(c.logo);if(b)b._tf7=1;await setLogoRaw(b);renderChip();
+  c.logo=u;persist();const b=fromDataURL(c.logo);if(b)b._tf7=1;await setLogoRaw(b);renderChip();
   openDlg(false,'নতুন লোগো বসেছে। চ্যানেল / পেজের নামটাও ঠিক আছে কিনা দেখে নিন।');};
 // AI prompts always carry the current channel name
 if(typeof buildScriptPrompt==='function'){const _b=buildScriptPrompt;buildScriptPrompt=function(){const p=_b.apply(this,arguments);const n=String(settings.brand||'').trim();
@@ -4926,7 +4939,7 @@ function renderDlg(first,msg){
   <div class="chmain"><h3></h3><p class="sub">যে নাম আর লোগো দেবেন, ভিডিওর শুরু-শেষ, টিকার, থাম্বনেইল, ক্যাপশন আর জেমিনির লেখা — সব জায়গায় সেটাই বসবে।</p>
   <div class="chmsg"></div>
   <div class="chf"><label for="chName">চ্যানেল / পেজের নাম</label><input id="chName" maxlength="60" autocomplete="off" placeholder="যেমন: বিশ্ব বার্তা"></div>
-  <div class="chlogo"><div class="pv"></div><div class="col"><div style="display:flex;gap:8px;flex-wrap:wrap"><label class="chbtn" style="cursor:pointer">${ico('upload',15)}<span>লোগো দিন</span><input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></label><button class="chbtn danger" type="button" id="chLogoDel">লোগো সরান</button></div>
+  <div class="chlogo"><div class="pv"></div><div class="col"><div style="display:flex;gap:8px;flex-wrap:wrap"><label class="chbtn" style="cursor:pointer">${ico('upload',15)}<span>লোগো দিন</span><input type="file" accept="image/*" hidden></label><button class="chbtn danger" type="button" id="chLogoDel">লোগো সরান</button></div>
    <label class="chsw"><input type="checkbox" id="chClean"><span>লোগোর চারপাশের সাদা / একরঙা অংশ সরিয়ে দিন</span></label></div></div>
   <div class="chfoot"><button class="chbtn danger" type="button" id="chDel">এই চ্যানেল মুছুন</button><span class="sp"></span><button class="chbtn ghost" type="button" id="chCancel">বাতিল</button><button class="chbtn pri" type="button" id="chSave">${ico('check',15)}সেভ করে ব্যবহার করুন</button></div></div></div>`;
   const list=ov.querySelector('.chlist');
@@ -4940,10 +4953,12 @@ function renderDlg(first,msg){
   const pvw=ov.querySelector('.pv');const paintPv=()=>{pvw.innerHTML='';if(ed.logo){const i=el('img');i.src=ed.logo;pvw.appendChild(i);}else{const s=el('span');s.textContent='লোগো নেই';pvw.appendChild(s);}};paintPv();
   const cl=$('#chClean');cl.checked=ed.clean;
   const fi=ov.querySelector('input[type=file]');
-  fi.onchange=async()=>{const f=fi.files[0];if(!f)return;if(f.size>15*1024*1024){alert('ফাইলটা খুব বড় (১৫ MB-এর কম দিন)।');return;}ed.orig=f;pvw.innerHTML='<span>ঠিক করা হচ্ছে…</span>';
-    ed.logo=await toDataURL(await shrink(ed.clean?await cleanLogo(f):f));paintPv();};
+  fi.onchange=async()=>{const f=fi.files[0];fi.value='';if(!f)return;if(f.size>40*1024*1024){alert('ফাইলটা খুব বড় (৪০ MB-এর কম দিন)।');return;}pvw.innerHTML='<span>ঠিক করা হচ্ছে…</span>';
+    let u=null;try{u=await prepLogo(f,ed.clean);}catch(e){u=null;}
+    if(!u){paintPv();m.style.display='';m.textContent=LOGO_BAD;return;}
+    ed.orig=f;ed.logo=u;m.textContent='';m.style.display='none';paintPv();};
   cl.onchange=async()=>{ed.clean=cl.checked;let o=ed.orig;if(!o){try{o=await IDB.get('chorig_'+ed.id);}catch(e){}}
-    if(!o&&ed.logo)o=fromDataURL(ed.logo);if(!o)return;pvw.innerHTML='<span>ঠিক করা হচ্ছে…</span>';ed.orig=o;ed.logo=await toDataURL(await shrink(ed.clean?await cleanLogo(o):o));paintPv();};
+    if(!o&&ed.logo)o=fromDataURL(ed.logo);if(!o)return;pvw.innerHTML='<span>ঠিক করা হচ্ছে…</span>';ed.orig=o;let u=null;try{u=await prepLogo(o,ed.clean);}catch(e){}if(u)ed.logo=u;paintPv();};
   $('#chLogoDel').onclick=()=>{ed.logo='';ed.orig=null;paintPv();};
   $('#chCancel').onclick=closeDlg;ov.onclick=e=>{if(e.target===ov&&!first)closeDlg();};
   const del=$('#chDel');del.style.visibility=(!ed.isNew&&CH.length>1)?'visible':'hidden';
