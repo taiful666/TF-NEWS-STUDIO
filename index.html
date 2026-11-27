@@ -4494,7 +4494,26 @@ function localCaption(){
   const tags=new Set(['#খবর','#বাংলা_খবর','#BanglaNews']);if(settings.brand)tags.add('#'+cl(settings.brand).replace(/\s+/g,''));
   ch.slice(0,3).forEach(h=>{const w=h.split(' ').filter(x=>x.length>2)[0];if(w)tags.add('#'+w.replace(/[^ঀ-৿A-Za-z0-9]/g,''));});
   out.push('');out.push([...tags].filter(t=>t.length>1).join(' '));return out.join('\n');}
-function fbCaption(){const c=settings.cap;if(c&&c.text&&c.key===key())return c.text;return localCaption();}
+/* 🛡️ Facebook caption guard (the same rules as TF FB Reels & Post Maker): sensitive words get a star (হ*ত্যা, নি*হত …)
+   and the caption never goes over 2200 characters (Facebook stops at 2500). Only the caption text — the voice, the
+   script and the words on the video are never touched. */
+const CAP_MAX=2200,CAP_WORDS=["ধর্ষণ", "ধর্ষক", "ধর্ষিত", "গণধর্ষণ", "যৌন হয়রানি", "যৌন নির্যাতন", "যৌনতা", "শ্লীলতাহানি", "পর্নো", "হত্যা", "হত্যাকাণ্ড", "গণহত্যা", "খুন", "খুনি", "আত্মহত্যা", "আত্মঘাতী", "লাশ", "মরদেহ", "মৃতদেহ", "রক্তাক্ত", "জবাই", "গলাকাটা", "কুপিয়ে", "পিটিয়ে", "ছুরিকাঘাত", "নিহত", "নির্যাতন", "হামলা", "সংঘর্ষ", "সহিংসতা", "মামলা", "গ্রেপ্তার", "গ্রেফতার", "অপহরণ", "যুদ্ধ", "বোমা", "বিস্ফোরণ", "ক্ষেপণাস্ত্র", "মিসাইল", "গুলিবিদ্ধ", "গুলিতে", "গুলি চালিয়ে", "গুলি করে", "গোলাগুলি", "অস্ত্র", "সন্ত্রাস", "জঙ্গি", "হুতি", "হামাস", "হিজবুল্লাহ", "তালেবান", "আইএস", "আল-কায়েদা", "মাদক", "ইয়াবা", "হেরোইন", "rape", "raped", "rapist", "sexual assault", "sexual abuse", "harassment", "murder", "murdered", "killed", "killing", "kill", "suicide", "dead body", "corpse", "bloody", "stabbed", "shooting", "shot dead", "gunfire", "bomb", "bombing", "blast", "explosion", "missile", "airstrike", "war", "genocide", "massacre", "terror", "terrorist", "terrorism", "militant", "houthi", "houthis", "hamas", "hezbollah", "taliban", "isis", "al-qaeda", "drugs", "abduction", "kidnap", "kidnapped", "torture", "arrested", "attack", "attacked", "violence", "মারামারি", "কাটাকাটি", "মারধর", "মারপিট", "হাতাহাতি", "ধাওয়া-পাল্টা ধাওয়া", "ধাওয়া পাল্টা ধাওয়া", "লাঠিসোঁটা", "ইটপাটকেল", "রক্ত", "রক্তপাত", "রক্তারক্তি", "জখম", "কোপ", "চাপাতি", "রামদা", "ছুরি", "ছুরিকাহত", "বন্দুক", "পিস্তল", "রিভলভার", "শটগান", "আগ্নেয়াস্ত্র", "গুলিবর্ষণ", "গুলি ছুড়ে", "গুলি ছোড়া", "হাতবোমা", "ককটেল", "পেট্রলবোমা", "অগ্নিসংযোগ", "দগ্ধ", "অগ্নিদগ্ধ", "ঝলসে", "পুড়িয়ে", "মৃত্যু", "প্রাণহানি", "শ্বাসরোধ", "গলা টিপে", "ঝুলন্ত", "বিষপান", "নিপীড়ন", "উত্ত্যক্ত", "ইভটিজিং", "যৌন", "পাচার", "মানবপাচার", "চোরাচালান", "অস্ত্রধারী", "সন্ত্রাসী", "ডাকাতি", "ডাকাত", "ছিনতাই", "চাঁদাবাজি", "লুটপাট", "ভাঙচুর", "তাণ্ডব", "দাঙ্গা", "গণপিটুনি", "পিটুনি", "নৃশংস", "বর্বর", "বীভৎস", "ক্ষতবিক্ষত", "খণ্ডিত", "টুকরো টুকরো", "কঙ্কাল", "শিরশ্ছেদ", "ফাঁসি", "মৃত্যুদণ্ড", "ক্রসফায়ার", "বন্দুকযুদ্ধ", "এনকাউন্টার", "গুম", "জিম্মি", "পণবন্দি", "মুক্তিপণ", "আত্মাহুতি", "গাঁজা", "ফেনসিডিল", "কোকেন", "জুয়া", "ক্যাসিনো", "অশ্লীল", "নগ্ন", "পতিতা", "সংঘাত", "রণক্ষেত্র", "বিমান হামলা", "ড্রোন হামলা", "গণকবর", "blood", "bloodshed", "stab", "stabbing", "gun", "guns", "pistol", "rifle", "firing", "gunman", "wounded", "assault", "assaulted", "beaten", "lynch", "lynching", "mob", "riot", "riots", "arson", "burned alive", "behead", "beheaded", "hanged", "execution", "hostage", "ransom", "trafficking", "smuggling", "cocaine", "heroin", "meth", "gambling", "porn", "nude", "naked", "gore", "brutal", "dead", "death", "deaths", "casualties", "গুলির", "বার গুলি", "ধারালো অস্ত্র"];
+const capRe=(()=>{const esc=w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),srt=a=>a.slice().sort((x,y)=>y.length-x.length).map(esc).join('|');
+  const bn=CAP_WORDS.filter(w=>/[ঀ-৿]/.test(w)),en=CAP_WORDS.filter(w=>!/[ঀ-৿]/.test(w));
+  return{bn:new RegExp('(?<![\\u0980-\\u09FF])(?:'+srt(bn)+')','g'),en:new RegExp('\\b(?:'+srt(en)+')\\b','gi')};})();
+function capStarWord(w){if(/[ঀ-৿]/.test(w)){let i=1;while(i<w.length){const c=w[i];if(c==='্'){i+=2;continue;}if(/[ঁ-ঃ়া-ৌৗ‌‍]/.test(c)){i++;continue;}break;}if(i>=w.length)i=1;return w.slice(0,i)+'*'+w.slice(i);}return w.length<3?w:w[0]+'*'+w.slice(2);}
+function capMask(s){return String(s||'').normalize('NFC').replace(capRe.bn,capStarWord).replace(capRe.en,capStarWord);}
+function capLimit(v){let s=String(v==null?'':v).trim();const max=CAP_MAX;if(s.length<=max)return s;let L=s.split('\n');
+  const isStory=l=>/^\s*[০-৯0-9]+[.)।]\s/.test(l),isTag=l=>/^\s*#/.test(l)||(l.match(/#\S+/g)||[]).length>=3,len=()=>L.join('\n').length;
+  const cut=(l,n)=>{if(l.length<=n)return l;let c=l.slice(0,n);c=c.replace(/\s+\S*$/,'');return c.replace(/[\s,;:—–-]+$/,'')+'…';};
+  for(const n of [200,150,110,80]){if(len()<=max)break;L=L.map(l=>isStory(l)?cut(l,n):l);}
+  while(len()>max&&L.filter(isStory).length>1){let i=-1;for(let j=L.length-1;j>=0;j--)if(isStory(L[j])){i=j;break;}L.splice(i,1);}
+  for(let i=L.length-1;i>=0&&len()>max;i--)if(isTag(L[i])){L[i]=(L[i].match(/#\S+/g)||[]).slice(0,2).join(' ');}
+  for(const n of [300,200,140]){if(len()<=max)break;L=L.map((l,i)=>i>1&&!isTag(l)?cut(l,n):l);}
+  s=L.join('\n').replace(/\n{3,}/g,'\n\n').trim();return s.length<=max?s:cut(s,max-1);}
+function capSafe(s){return capLimit(capMask(s));}
+window.TFCapSafe=capSafe;
+function fbCaption(){const c=settings.cap;if(c&&c.text&&c.key===key())return capSafe(c.text);return capSafe(localCaption());}
 /* ---- YouTube: thumbnail text, title, description, tags ---- */
 function localYT(){
   const ch=scenes.filter(s=>s.isChapter&&!s.special&&!isHead(s)).map(s=>cl(s.text)).filter(Boolean);
@@ -4511,10 +4530,10 @@ function curPl(){return settings.capPl==='yt'?'yt':'fb';}
 function caption(){return curPl()==='yt'?ytText():fbCaption();}
 // AI writes the caption together with the script
 {const _bp=buildScriptPrompt;buildScriptPrompt=function(raw){let p=_bp(raw);
-  p=p.replace('RULES:','RULES:\n- Also write "caption": a ready-to-post Facebook/YouTube caption in Bangla — 1 catchy first line (faithful to the facts, no fake clickbait), then 2-4 short lines with the key facts (one line per story for a bulletin), then a line inviting people to follow the page, then 5-8 relevant hashtags. Put it in the JSON as "caption":"..." (use \\n for new lines). Also add "yt":{"title":"<YouTube title, max 90 chars, strong but 100% faithful>","desc":"<YouTube description: 2-3 sentence summary, then the stories as a short list, then a subscribe line, then 3-5 hashtags; use \\n for new lines>","tags":["<8-15 YouTube search tags in Bangla and English>"]}. The "caption" is for Facebook (emoji friendly, 5-8 hashtags); "yt" is for YouTube (the thumbnail text is already in "thumb").');return p;};}
+  p=p.replace('RULES:','RULES:\n- Also write "caption": a ready-to-post Facebook/YouTube caption in Bangla — 1 catchy first line (faithful to the facts, no fake clickbait), then 2-4 short lines with the key facts (one line per story for a bulletin), then a line inviting people to follow the page, then 5-8 relevant hashtags. The whole caption must stay under 2000 characters (Facebook refuses longer ones). Put it in the JSON as "caption":"..." (use \\n for new lines). Also add "yt":{"title":"<YouTube title, max 90 chars, strong but 100% faithful>","desc":"<YouTube description: 2-3 sentence summary, then the stories as a short list, then a subscribe line, then 3-5 hashtags; use \\n for new lines>","tags":["<8-15 YouTube search tags in Bangla and English>"]}. The "caption" is for Facebook (emoji friendly, 5-8 hashtags); "yt" is for YouTube (the thumbnail text is already in "thumb").');return p;};}
 {const _as=applyScriptObj;applyScriptObj=function(j){const r=_as.apply(this,arguments);try{if(j&&typeof j.caption==='string'&&j.caption.trim()){setTimeout(()=>{settings.cap={text:j.caption.trim(),key:key()};try{save();}catch(e){}capUI();},250);}if(j&&j.yt&&typeof j.yt==='object'){setTimeout(()=>{const y=j.yt,o={key:key()};if(y.title)o.title=cl(y.title);if(typeof y.desc==='string'&&y.desc.trim())o.desc=y.desc.trim();if(Array.isArray(y.tags)&&y.tags.length)o.tags=y.tags.map(cl).filter(Boolean).join(', ');else if(typeof y.tags==='string'&&y.tags.trim())o.tags=y.tags.trim();settings.capYT=o;try{save();}catch(e){}capUI();},260);}}catch(e){}return r;};}
 // copy
-async function copyCap(t){t=t==null?$('#capText').value:t;
+async function copyCap(t,raw){t=t==null?$('#capText').value:t;if(!raw)t=curPl()==='yt'?capMask(t):capSafe(t);
   if(APP&&Android.copyText){try{if(Android.copyText(t))return true;}catch(e){}}try{await navigator.clipboard.writeText(t);return true;}catch(e){}
   const ta=D.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:-9999px';D.body.appendChild(ta);ta.select();let ok=false;try{ok=D.execCommand('copy');}catch(e){}ta.remove();return ok;}
 /* ---------- UI ---------- */
@@ -4536,10 +4555,11 @@ function capUI(){const pl=curPl();$('#capTabFb').classList.toggle('on',pl==='fb'
   if(pl==='fb'){const t=$('#capText');if(D.activeElement!==t)t.value=fbCaption();}
   else{const y=ytData();[['ytThumb','thumb'],['ytTitle','title'],['ytDesc','desc'],['ytTags','tags']].forEach(([id,k])=>{const e=$('#'+id);if(D.activeElement!==e)e.value=y[k]||'';});}}
 $('#capText').addEventListener('input',e=>{settings.cap={text:e.target.value,key:key()};try{save();}catch(er){}});
+$('#capText').addEventListener('change',e=>{const v=capSafe(e.target.value);if(v!==e.target.value.trim()){e.target.value=v;settings.cap={text:v,key:key()};try{save();}catch(er){}}});
 function ytSave(){settings.capYT={thumb:$('#ytThumb').value,title:$('#ytTitle').value,desc:$('#ytDesc').value,tags:$('#ytTags').value,key:key()};try{save();}catch(e){}}
 ['ytThumb','ytTitle','ytDesc','ytTags'].forEach(id=>$('#'+id).addEventListener('input',ytSave));
 [$('#capTabFb'),$('#capTabYt')].forEach(b=>b.onclick=()=>{settings.capPl=b.dataset.pl;try{save();}catch(e){}capUI();});
-D.querySelectorAll('#tfCap .ytc').forEach(b=>b.onclick=async()=>{const ok=await copyCap($('#'+b.dataset.k).value);say(ok?'✔ কপি হয়েছে':'কপি হয়নি');});
+D.querySelectorAll('#tfCap .ytc').forEach(b=>b.onclick=async()=>{const ok=await copyCap(b.dataset.k==='ytTags'?$('#'+b.dataset.k).value:capMask($('#'+b.dataset.k).value),true);say(ok?'✔ কপি হয়েছে':'কপি হয়নি');});
 $('#capNew').onclick=()=>{if(curPl()==='yt')settings.capYT=null;else settings.cap=null;try{save();}catch(e){}capUI();};
 const say=m=>{const o=$('#capOk');o.textContent=m;o.classList.remove('hidden');clearTimeout(o._t);o._t=setTimeout(()=>o.classList.add('hidden'),4000);};
 $('#capCopy').onclick=async()=>{say(await copyCap(caption())?'✔ কপি হয়েছে — পোস্টের লেখার ঘরে পেস্ট করুন।':'কপি হয়নি — লেখাটা চেপে ধরে নিজে কপি করুন।');};
